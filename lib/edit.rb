@@ -1,4 +1,4 @@
-require "../hash_mod/lib/hash_mod"
+require "../rspec_book_etc/hash_mod/lib/hash_mod"
 
 class Edit
   attr_reader :split_command
