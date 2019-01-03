@@ -10,7 +10,7 @@ describe 'Edit' do
     subject {@edit1}
     it {should respond_to :split_command}
     it 'produces a command to split the file at the split point' do
-      expect(@edit1.split_command).to eq('mp3split 180908_0670.MP3 02:18:00')
+      expect(@edit1.split_command).to eq('mp3splt 180908_0670.MP3 02:18:00')
     end
   end
 end

@@ -7,8 +7,9 @@ class Edit
   def initialize (options = {})
     options_symbol = HashMod.new options
     options = options_symbol.to_symbol_hash
-    #@username = options[:username] || "username not set"
-    @split_command = 'something'
-    @file_name = 'nameoffile'
+    @username = options[:username] || "username not set"
+    @file_name = options[:file_name] || "name_of_file not set"
+    @split_point = options[:split_point] || "split_point not set"
+    @split_command = 'mp3splt ' + @file_name + ' ' + @split_point
   end
 end
