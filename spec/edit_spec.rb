@@ -10,7 +10,6 @@ describe 'Edit' do
     subject {@edit1}
     it {should respond_to :split_command}
     it 'produces a command to split the file at the split point' do
-<<<<<<< HEAD
       expect(@edit1.split_command).to eq('mp3splt 180908_0688.MP3 2.18 3.00')
     end
   end
@@ -20,11 +19,7 @@ describe 'Edit' do
     end
     subject {@tag_edit}
     it 'produces a command to add a genre tag to the file' do
-      expect(@tag_edit.tag_command).to eq('tag 180908_0688.MP3 --genre "Classical"')
-=======
-      expect(@edit1.split_command).to eq('mp3splt 180908_0670.MP3 02:18:00')
->>>>>>> 62b5fe5c199f19c5c056212600cc08143e3d33ed
+      expect(@tag_edit.tag_command).to eq('id3v2 180908_0688.MP3 --genre "Classical"')
     end
   end
 end
-
