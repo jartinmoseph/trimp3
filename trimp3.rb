@@ -37,7 +37,6 @@ ThisLinePlusTitles = Array.new
 for row in 1..CsvArray.length-1
   ThisLinePlusTitles[0] = CsvArray[0]
   ThisLinePlusTitles[1] = CsvArray[row]
-  puts ThisLinePlusTitles.inspect
 end
 
 =begin
