@@ -16,26 +16,23 @@ class CommandBuilder
   def convert_csv_to_hash
     @edit_options = Hash.new
     width = @csv_array.transpose.length
+    @complete_command = @command + ' '
     for col in 0..width-1
       key = @csv_array[0][col]
       val = @csv_array[1][col]
       #puts "key is " + key.inspect + " val is " + val.inspect
       if @columns.include? key 
         puts "inside if loop - key is " + key.inspect + " val is " + val.inspect
-        @edit_options[key] = val
+        @complete_command.concat '--'
+        @complete_command.concat key 
+        @complete_command.concat " £"
+        @complete_command.concat val
+        @complete_command.concat '£ '
       end 
     end
-    puts @edit_options.inspect
-    @complete_command = @command + ' '
-    @edit_options.each do 
-      @complete_command.concat '--'
-      @complete_command.concat key 
-      @complete_command.concat " £"
-      @complete_command.concat val
-      @complete_command.concat '£ '
-      puts @complete_command.inspect
-    end
-    return @edit_options
+    @complete_command.gsub! '£', '"'
+    puts @complete_command.inspect
+    return @complete_command
   end
 end 
 

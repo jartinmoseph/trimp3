@@ -12,31 +12,43 @@ TagFile = ARGV[2] + "_tag\.txt"
 SplitHandle = File.open SplitFile,"w+"
 TagHandle = File.open TagFile,"w+"
 CsvArray = CSV.read CsvFile
-#puts "CsvArray: " + CsvArray.inspect
 
 ConfPC = ParseConfig.new ConfigFile
 ConfHash = ConfPC.params
 ConfHash.freeze
 
 TagListFile = ConfHash['tag_list'] || "tag_list not set"
-#puts "TagListFile: " + TagListFile.inspect
 TagListFileHandle = File.open TagListFile,"r"
-TagListFileString = TagListFileHandle.read
-#Pass CsvArray and TagFileList to object for tagging a file
-TagCommand = CommandBuilder.new :command => "id3v2", :csv_array => CsvArray, :columns => TagListFileString
-#puts "TagCommand: " + TagCommand.inspect
+TagListFileContents = TagListFileHandle.read
+TagListFileString = TagListFileContents.to_s
+#puts "TagListFileString is: " + TagListFileString.inspect
 
 TrimColumnNamesFile = ConfHash['trim_column_names']
-puts "TrimColumnNamesFile: " + TrimColumnNamesFile.inspect
+#puts "TrimColumnNamesFile: " + TrimColumnNamesFile.inspect
 TrimColumnNamesFileHandle = File.open TrimColumnNamesFile,"r"
-p TrimColumnNamesFileString = TrimColumnNamesFileHandle.read
+TrimColumnNamesFileString = TrimColumnNamesFileHandle.read
 #Pass each line of the array, plus the top line to the command builder, also the command and the list of tags
 Width = CsvArray.transpose.length
 Length = CsvArray.length
-ThisLinePlusTitles = Array.new
+ThisLinePlusTitlesArray = Array.new
+ThisLinePlusTitlesHash = Hash.new
+Handover = Hash.new
+Handover.update :tag_list => TagListFileString
+#puts "Handover: " + Handover.inspect
+
 for row in 1..CsvArray.length-1
-  ThisLinePlusTitles[0] = CsvArray[0]
-  ThisLinePlusTitles[1] = CsvArray[row]
+  ThisLinePlusTitlesArray[0] = CsvArray[0]
+  ThisLinePlusTitlesArray[1] = CsvArray[row]
+  for col in 0..Width-1
+    ThisLinePlusTitlesHash[CsvArray[0][col]] = CsvArray[row][col] || ""
+  end
+  Handover.update :hash => ThisLinePlusTitlesHash, :array => ThisLinePlusTitlesArray
+  #puts "Handover: " + Handover.inspect
+  #puts "Handover class: " + Handover.class.inspect
+  #puts "Handover hash: " + Handover[:hash].inspect
+  this_edit = Edit.new Handover
+  SplitHandle.write this_edit.split_command + "\n"
+  TagHandle.write this_edit.tag_command + "\n"
 end
 
 =begin
