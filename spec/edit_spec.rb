@@ -1,6 +1,6 @@
 require 'rspec'
 require './lib/edit.rb'
-require '../rspec_book_etc/hash_mod/lib/hash_mod.rb'
+#require '../rspec_book_etc/hash_mod/lib/hash_mod.rb'
 
 describe 'Edit' do
   context 'generate predicted_filename' do
