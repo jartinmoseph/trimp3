@@ -3,7 +3,9 @@
 class Edit
   attr_reader :split_command
   attr_reader :predicted_filename
+  attr_reader :wildcard_filename
   attr_reader :extensionless_filename
+  attr_reader :edit_by_ffmpeg
 
   def initialize (options = {})
     @handover_hash = options[:hash]
@@ -15,8 +17,17 @@ class Edit
     @extensionless_filename = @file_name.gsub(/\..*/, '')
     @discard_before_mins = sprintf("%02d", @discard_before) + 'm_' + sprintf("%02d", (@discard_before % 1) * 100) + 's__' || "discard_before not set"
     @discard_after_mins = sprintf("%02d", @discard_after) + 'm_' + sprintf("%02d", (@discard_after % 1) * 100) + 's'
-    @split_command = 'mp3splt ' + @file_name + ' ' + sprintf("%.02f", @discard_before) + ' ' + sprintf("%.02f", @discard_after) 
+    if @discard_after > 0
+      @split_command = 'mp3splt ' + @file_name + ' ' + sprintf("%.02f", @discard_before) + ' ' + sprintf("%.02f", @discard_after) 
+    else
+      @split_command = 'mp3splt ' + @file_name + ' ' + sprintf("%.02f", @discard_before) + ' EOF'
+    end
+
     @predicted_filename = @extensionless_filename + '_' + @discard_before_mins + @discard_after_mins + '.mp3'
+    @wildcard_filename = @extensionless_filename + '_' + @discard_before_mins + '*.mp3'
+  end
+  def edit_by_ffmpeg
+    'ffmpeg -ss '
   end
   def tag_command
     set_tags = String.new
