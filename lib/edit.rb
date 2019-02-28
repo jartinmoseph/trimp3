@@ -37,7 +37,7 @@ class Edit
   def edit_by_ffmpeg
     @discard_before_total_seconds = (@discard_before_hours * 3600) + (@discard_before_minutes * 60) + (@discard_before_seconds)
     @discard_after_total_seconds = (@discard_after_hours * 3600) + (@discard_after_minutes * 60) + (@discard_after_seconds)
-    'ffmpeg -ss ' + @discard_before_total_seconds.to_s + ' -t ' + @discard_after_total_seconds.to_s + ' -i ' + @file_name + ' -acodec copy ' + @output_filename + '_' + @artist + '_'
+    'ffmpeg -ss ' + @discard_before_total_seconds.to_s + ' -t ' + @discard_after_total_seconds.to_s + ' -i ' + @file_name + ' -acodec copy ' + @output_filename + '_' + @artist.downcase.gsub(/ /,'-') + '_'
   end
   def tag_command
     set_tags = String.new
