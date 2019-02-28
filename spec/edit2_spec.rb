@@ -23,7 +23,7 @@ describe 'Edit' do
     subject {@edit_ffmpeg}
     it {should respond_to :edit_by_ffmpeg}
     it 'can return an ffmpeg command to split the file' do
-      expect(@edit_ffmpeg.edit_by_ffmpeg).to eq('ffmpeg -ss 53.0 -t 120.0 -i 180919_0688.MP3 -acodec copy bwv847_martin-pickersgill_19sept19')
+      expect(@edit_ffmpeg.edit_by_ffmpeg).to eq('ffmpeg -ss 53.0 -t 120.0 -i 180919_0688.MP3 -acodec copy bwv847_martin-pickersgill_19sept18')
     end
   end
 end
