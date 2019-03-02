@@ -1,4 +1,5 @@
 #require "../rspec_book_etc/hash_mod/lib/hash_mod"§§
+require "date"
 
 class Edit
   attr_reader :split_command
@@ -34,11 +35,16 @@ class Edit
     @predicted_filename = @extensionless_filename + '_' + @discard_before_mins + @discard_after_mins + '.mp3'
     @wildcard_filename = @extensionless_filename + '_' + @discard_before_mins + '*.mp3'
   end
+
   def edit_by_ffmpeg
     @discard_before_total_seconds = (@discard_before_hours * 3600) + (@discard_before_minutes * 60) + (@discard_before_seconds)
+    @discard_before_cmd = '-ss ' + @discard_before_total_seconds.to_s
     @discard_after_total_seconds = (@discard_after_hours * 3600) + (@discard_after_minutes * 60) + (@discard_after_seconds)
-    'ffmpeg -ss ' + @discard_before_total_seconds.to_s + ' -t ' + @discard_after_total_seconds.to_s + ' -i ' + @file_name + ' -acodec copy ' + @output_filename + '_' + @artist.downcase.gsub(/ /,'-') + '_'
+    @discard_after_cmd = ' -t ' + @discard_after_total_seconds.to_s
+    @date_with_month_in_text = @file_name[4,2] + Date::ABBR_MONTHNAMES[@file_name[2,2].to_i].downcase + @file_name[0,2]
+    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds == 0 ? "" :  @discard_after_cmd) + ' -i ' + @file_name + ' -acodec copy ' + @output_filename + '_' + @artist.downcase.gsub(/ /,'-') + '_' + @date_with_month_in_text 
   end
+
   def tag_command
     set_tags = String.new
     @handover_hash.each do |key, value|

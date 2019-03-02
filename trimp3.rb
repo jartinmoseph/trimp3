@@ -37,6 +37,6 @@ for row in 1..CsvArray.length-1
   end
   Handover.update :hash => ThisLinePlusTitlesHash, :array => ThisLinePlusTitlesArray
   this_edit = Edit.new Handover
-  SplitHandle.write this_edit.split_command + "\n"
+  SplitHandle.write this_edit.edit_by_ffmpeg + "\n"
   TagHandle.write this_edit.tag_command.to_s + "\n"
 end
