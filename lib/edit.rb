@@ -20,6 +20,8 @@ class Edit
     @discard_after_minutes = @handover_hash['discard_after_minutes'].to_f || 0
     @discard_after_seconds = @handover_hash['discard_after_seconds'].to_f || 0
     @discard_after  = @handover_hash['discard_after'].to_f || "discard_after not set"
+    @distinguisher = @handover_hash['distinguisher'].to_s || ""
+    @comment = @handover_hash['comment'].to_s || ""
     @file_name = @handover_hash['file_name'] || @handover_hash[:file_name] || "name_of_file not set"
     @extensionless_filename = @file_name.gsub(/\..*/, '')
     @output_filename = @handover_hash['song'].downcase
@@ -42,7 +44,7 @@ class Edit
     @discard_after_total_seconds = (@discard_after_hours * 3600) + (@discard_after_minutes * 60) + (@discard_after_seconds)
     @discard_after_cmd = ' -t ' + @discard_after_total_seconds.to_s
     @date_with_month_in_text = @file_name[4,2] + Date::ABBR_MONTHNAMES[@file_name[2,2].to_i].downcase + @file_name[0,2]
-    @calculated_filename = @output_filename + '_' + @artist.downcase.gsub(/ /,'-') + '_' + @date_with_month_in_text + '.mp3'
+    @calculated_filename = @output_filename + '_' + @artist.downcase.gsub(/ /,'-') + '_' + (@distinguisher != "" ? @distinguisher + '-' : "") + (@comment != "" ? @comment.downcase + '-' : "") + @date_with_month_in_text + '.mp3'
     'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds == 0 ? "" :  @discard_after_cmd) + ' -i ' + @file_name + ' -acodec copy ' + @calculated_filename
   end
 
