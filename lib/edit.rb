@@ -42,7 +42,8 @@ class Edit
     @discard_after_total_seconds = (@discard_after_hours * 3600) + (@discard_after_minutes * 60) + (@discard_after_seconds)
     @discard_after_cmd = ' -t ' + @discard_after_total_seconds.to_s
     @date_with_month_in_text = @file_name[4,2] + Date::ABBR_MONTHNAMES[@file_name[2,2].to_i].downcase + @file_name[0,2]
-    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds == 0 ? "" :  @discard_after_cmd) + ' -i ' + @file_name + ' -acodec copy ' + @output_filename + '_' + @artist.downcase.gsub(/ /,'-') + '_' + @date_with_month_in_text 
+    @calculated_filename = @output_filename + '_' + @artist.downcase.gsub(/ /,'-') + '_' + @date_with_month_in_text + '.mp3'
+    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds == 0 ? "" :  @discard_after_cmd) + ' -i ' + @file_name + ' -acodec copy ' + @calculated_filename
   end
 
   def tag_command
@@ -54,7 +55,7 @@ class Edit
         end
       end
     end
-    @tag_command = 'id3v2 "' + @predicted_filename + '"' + set_tags
+    @tag_command = 'id3v2 "' + @calculated_filename + '"' + set_tags
   end
 end
 
