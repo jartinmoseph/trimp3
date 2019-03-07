@@ -2,13 +2,15 @@ require "csv"
 require "./lib/edit.rb"
 require "parseconfig"
 
-puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv outputfile"
+puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv outputfileprefix"
 ConfigFile = ARGV[0]
 CsvFile = ARGV[1]
 SplitFile = ARGV[2] + "_split\.txt"
 TagFile = ARGV[2] + "_tag\.txt"
+SplitTagFile = ARGV[2] + "_split_then_tag\.txt"
 SplitHandle = File.open SplitFile,"w+"
 TagHandle = File.open TagFile,"w+"
+SplitTagHandle = File.open SplitTagFile,"w+"
 CsvArray = CSV.read CsvFile
 
 ConfPC = ParseConfig.new ConfigFile
@@ -39,4 +41,6 @@ for row in 1..CsvArray.length-1
   this_edit = Edit.new Handover
   SplitHandle.write this_edit.edit_by_ffmpeg + "\n"
   TagHandle.write this_edit.tag_command.to_s + "\n"
+  SplitTagHandle.write this_edit.edit_by_ffmpeg + "\n"
+  SplitTagHandle.write this_edit.tag_command.to_s + "\n"
 end
