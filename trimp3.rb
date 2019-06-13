@@ -3,6 +3,7 @@ require "./lib/edit.rb"
 require "parseconfig"
 
 puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv outputfileprefix"
+puts "REMINDER: save csv with tab as field separator"
 ConfigFile = ARGV[0]
 CsvFile = ARGV[1]
 SplitFile = ARGV[2] + "_split\.txt"
@@ -11,7 +12,7 @@ SplitTagFile = ARGV[2] + "_split_then_tag\.txt"
 SplitHandle = File.open SplitFile,"w+"
 TagHandle = File.open TagFile,"w+"
 SplitTagHandle = File.open SplitTagFile,"w+"
-CsvArray = CSV.read CsvFile
+CsvArray = CSV.read CsvFile, {:col_sep => "\t"}
 
 ConfPC = ParseConfig.new ConfigFile
 ConfHash = ConfPC.params.freeze
@@ -23,7 +24,7 @@ TagListFileString = TagListFileHandle.read.to_s
 TrimColumnNamesFile = ConfHash['trim_column_names']
 TrimColumnNamesFileHandle = File.open TrimColumnNamesFile,"r"
 TrimColumnNamesFileString = TrimColumnNamesFileHandle.read
-
+ 
 Width = CsvArray.transpose.length
 Length = CsvArray.length
 ThisLinePlusTitlesArray = Array.new
