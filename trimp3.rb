@@ -2,8 +2,9 @@ require "csv"
 require "./lib/edit.rb"
 require "parseconfig"
 
-puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv outputfileprefix"
+puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv /path/to/mp3s/outputfileprefix"
 puts "REMINDER: save csv with tab as field separator"
+puts "ANOTHER THING: csv's with empty fields make it crash"
 ConfigFile = ARGV[0]
 CsvFile = ARGV[1]
 SplitFile = ARGV[2] + "_split\.txt"
@@ -16,6 +17,7 @@ CsvArray = CSV.read CsvFile, {:col_sep => "\t"}
 
 ConfPC = ParseConfig.new ConfigFile
 ConfHash = ConfPC.params.freeze
+puts "CONFIG:" + ConfHash.inspect
 
 TagListFile = ConfHash['tag_list'] || "tag_list not set"
 TagListFileHandle = File.open TagListFile,"r"

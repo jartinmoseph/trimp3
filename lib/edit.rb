@@ -7,6 +7,7 @@ class Edit
   attr_reader :wildcard_filename
   attr_reader :extensionless_filename
   attr_reader :edit_by_ffmpeg
+  attr_reader :discard_after_calculated_seconds
 
   def initialize (options = {})
     @handover_hash = options[:hash]
@@ -24,7 +25,7 @@ class Edit
     @comment = @handover_hash['comment'].to_s || ""
     @file_name = @handover_hash['file_name'] || @handover_hash[:file_name] || "name_of_file not set"
     @extensionless_filename = @file_name.gsub(/\..*/, '')
-    @output_filename = @handover_hash['song'].downcase
+    @output_filename = @handover_hash['song'].downcase.gsub(/ /,'-')
     @artist = @handover_hash['artist']
     @discard_before_mins = sprintf("%02d", @discard_before) + 'm_' + sprintf("%02d", (@discard_before % 1) * 100) + 's__' || "discard_before not set"
     @discard_after_mins = sprintf("%02d", @discard_after) + 'm_' + sprintf("%02d", (@discard_after % 1) * 100) + 's'
@@ -42,10 +43,13 @@ class Edit
     @discard_before_total_seconds = (@discard_before_hours * 3600) + (@discard_before_minutes * 60) + (@discard_before_seconds)
     @discard_before_cmd = '-ss ' + @discard_before_total_seconds.to_s
     @discard_after_total_seconds = (@discard_after_hours * 3600) + (@discard_after_minutes * 60) + (@discard_after_seconds)
-    @discard_after_cmd = ' -t ' + @discard_after_total_seconds.to_s
+    @discard_after_calculated_seconds = @discard_after_total_seconds - @discard_before_total_seconds
+    @discard_after_cmd = ' -t ' + @discard_after_calculated_seconds.to_s
     @date_with_month_in_text = @file_name[4,2] + Date::ABBR_MONTHNAMES[@file_name[2,2].to_i].downcase + @file_name[0,2]
-    @calculated_filename = @output_filename + '_' + @artist.downcase.gsub(/ /,'-') + '_' + (@distinguisher != "" ? @distinguisher + '-' : "") + (@comment != "" ? @comment.downcase + '-' : "") + @date_with_month_in_text + '.mp3'
-    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds == 0 ? "" :  @discard_after_cmd) + ' -i ' + @file_name + ' -acodec copy ' + @calculated_filename
+
+    @calculated_filename = @output_filename + '_' + @artist.downcase.gsub(/ /,'-').gsub(/,/,'-').gsub(/--/,'-').gsub(/’/,'-') + '_' + (@distinguisher != "" ? @distinguisher + '-' : "") + (@comment != "" ? @comment.downcase.gsub(/ /,'-') + '-' : "") + @date_with_month_in_text + '.mp3'
+    @calculated_filename = @calculated_filename.gsub(/,/,'') 
+    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @file_name + ' -acodec copy ' + @calculated_filename
   end
 
   def tag_command
