@@ -12,7 +12,7 @@ describe 'TagsForThisFile' do
     end
     subject {@tags}
     it 'returns an array containing the file tags' do
-      expect(@tags.this_file_tag_array).to eq([nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "14TTB", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "Home", nil, "J S Bach", "(32)", nil, nil, nil, nil, nil, nil, nil, nil, "Martin Pickersgill, J S Bach, 2 pt Invention D Min BWV775,  14TTB, March 2017", nil, nil, nil, nil, nil, nil, "170326_0141.MP3", nil, nil, nil, nil, "Martin Pickersgill", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil])
+      expect(@tags.this_file_tag_array).to eq(["bwv775_martin-pickersgill_1-14ttb-26mar17.mp3", "Martin Pickersgill", "Home", nil, nil, 32, nil, nil, nil, "bwv775_martin-pickersgill_1-14ttb-26mar17.mp3", nil, nil, nil, nil, nil, nil, nil, nil, "J S Bach", "Martin Pickersgill, J S Bach, 2 pt Invention D Min BWV775,  14TTB, March 2017", "14TTB", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "Home", nil,  "(32)", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "170326_0141.MP3", nil, nil, nil, nil, "Martin Pickersgill", nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil])
     end
     it 'can return the folder and file' do
       expect(@tags.folder).to eq("/Users/martinpick/Dropbox/sqbx/1car/LS_14_MP/bwv775")

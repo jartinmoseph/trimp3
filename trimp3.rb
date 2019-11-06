@@ -5,6 +5,7 @@ require "parseconfig"
 puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv /path/to/mp3s/outputfileprefix"
 puts "REMINDER: save csv with tab as field separator"
 puts "ANOTHER THING: csv's with empty fields make it crash"
+puts "have it put the output files in the correct folder"
 ConfigFile = ARGV[0]
 CsvFile = ARGV[1]
 SplitFile = ARGV[2] + "_split\.txt"

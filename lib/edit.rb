@@ -47,7 +47,7 @@ class Edit
     @discard_after_cmd = ' -t ' + @discard_after_calculated_seconds.to_s
     @date_with_month_in_text = @file_name[4,2] + Date::ABBR_MONTHNAMES[@file_name[2,2].to_i].downcase + @file_name[0,2]
 
-    @calculated_filename = @output_filename + '_' + @artist.downcase.gsub(/ /,'-').gsub(/,/,'-').gsub(/--/,'-').gsub(/’/,'-') + '_' + (@distinguisher != "" ? @distinguisher + '-' : "") + (@comment != "" ? @comment.downcase.gsub(/ /,'-') + '-' : "") + @date_with_month_in_text + '.mp3'
+    @calculated_filename = @output_filename + '_' + @artist.downcase.gsub(/ /,'-').gsub(/,/,'-').gsub(/--/,'-').gsub(/'/,'-') + '_' + (@distinguisher != "" ? @distinguisher + '-' : "") + (@comment != "" ? @comment.downcase.gsub(/ /,'-') + '-' : "") + @date_with_month_in_text + '.mp3'
     @calculated_filename = @calculated_filename.gsub(/,/,'') 
     'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @file_name + ' -acodec copy ' + @calculated_filename
   end
