@@ -29,7 +29,7 @@ describe 'Edit' do
       expect(@edit3_ffmpeg.edit_by_ffmpeg).to eq('ffmpeg  -i 180919_0688.MP3 -acodec copy bwv847_tara-o-rourke-sue-clark-david-winder_3-14ttb-19sep18.mp3')
     end
   end
-  context 'split by ffmpeg with neither discard_before nor discard_after values' do
+  xcontext 'split by ffmpeg with neither discard_before nor discard_after values 6 Nov 19 both these variables have been removed' do
     before :each do
       @tag_list = "genre,year,artist" 
       @hash_version_of_data = {'file_name' => "180919_0688.MP3", 'discard_before_hours' => "0", 'discard_before_minutes' => "0", 'discard_before_seconds' => "0", 'discard_after_hours' => "0", 'discard_after_minutes' => "0", 'discard_after_seconds' => "0", 'discard_before' => "0", 'discard_after' => "0", 'artist' => "Martin Pickersgill", 'album' => "Alberti", 'song' => "BWV847", 'genre' => "32", 'TYER' => "2018", 'TIT2' => "Martin Pickersgill, J S Bach, Prelude in C Minor, Bk 1, Alberti, 19 Sept 2018"}
@@ -57,7 +57,7 @@ describe 'Edit' do
       expect(@edit2_ffmpeg.edit_by_ffmpeg).to eq('ffmpeg -ss 53.0 -i 180919_0688.MP3 -acodec copy bwv847_martin-pickersgill_19sep18.mp3')
     end
   end
-  context 'split by ffmpeg with no discard_before values' do
+  xcontext 'split by ffmpeg with no discard_before values 6 Nov 19 discard_before has been removed' do
     before :each do
       @tag_list = "genre,year,artist" 
       @hash_version_of_data = {'file_name' => "180919_0688.MP3", 'discard_before_hours' => "", 'discard_before_minutes' => "", 'discard_before_seconds' => "", 'discard_after_hours' => "0", 'discard_after_minutes' => "2", 'discard_after_seconds' => "0", 'discard_before' => "", 'discard_after' => "2", 'artist' => "Martin Pickersgill", 'album' => "Alberti", 'song' => "BWV847", 'genre' => "32", 'TYER' => "2018", 'TIT2' => "Martin Pickersgill, J S Bach, Prelude in C Minor, Bk 1, Alberti, 19 Sept 2018"}
@@ -66,7 +66,7 @@ describe 'Edit' do
       @edit_ffmpeg = Edit.new options_ffmpeg
     end
     subject {@edit_ffmpeg}
-    it 'can return an ffmpeg command without -ss if all discard_before values are zero' do
+    it 'can return an ffmpeg command without -ss if all discard_before values are zero 6 nov 19 discard_before has been removed' do
       expect(@edit_ffmpeg.edit_by_ffmpeg).to eq('ffmpeg  -t 120.0 -i 180919_0688.MP3 -acodec copy bwv847_martin-pickersgill_19sep18.mp3')
     end
   end
