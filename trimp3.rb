@@ -1,11 +1,20 @@
 require "csv"
 require "./lib/edit.rb"
 require "parseconfig"
+require "readline"
+require 'readline'
+def input(prompt="", newline=false)
+  prompt += "\n" if newline
+  Readline.readline(prompt, true).squeeze(" ").strip
+end
+
 
 puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv /path/to/mp3s/outputfileprefix"
 puts "REMINDER: save csv with tab as field separator"
 puts "ANOTHER THING: csv's with empty fields make it crash"
 puts "have it put the output files in the correct folder"
+name = input "What is your name? "
+
 ConfigFile = ARGV[0]
 CsvFile = ARGV[1]
 SplitFile = ARGV[2] + "_split\.txt"
@@ -27,6 +36,8 @@ TagListFileString = TagListFileHandle.read.to_s
 TrimColumnNamesFile = ConfHash['trim_column_names']
 TrimColumnNamesFileHandle = File.open TrimColumnNamesFile,"r"
 TrimColumnNamesFileString = TrimColumnNamesFileHandle.read
+
+PathFromConfigFile = ConfHash['file_location']
  
 Width = CsvArray.transpose.length
 Length = CsvArray.length
@@ -48,3 +59,4 @@ for row in 1..CsvArray.length-1
   SplitTagHandle.write this_edit.edit_by_ffmpeg + "\n"
   SplitTagHandle.write this_edit.tag_command.to_s + "\n"
 end
+
