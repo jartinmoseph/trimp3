@@ -1,4 +1,3 @@
-#require "../rspec_book_etc/hash_mod/lib/hash_mod"§§
 require "date"
 
 class Edit
@@ -8,11 +7,19 @@ class Edit
   attr_reader :extensionless_filename
   attr_reader :edit_by_ffmpeg
   attr_reader :discard_after_calculated_seconds
+  attr_reader :destination_folder
+  attr_reader :original_file_location
 
   def initialize (options = {})
     @handover_hash = options[:hash]
     @handover_array = options[:array]
     @tag_list = options[:tag_list].to_s || "tag list not set"
+    @original_file_location = options[:original_file_location] || ""
+    if options[:original_file_location] && @original_file_location[-1] == '/'
+    elsif options[:original_file_location]
+      @original_file_location = @original_file_location + '/'
+    else
+    end
     @discard_before_hours = @handover_hash['discard_before_hours'].to_f || 0
     @discard_before_minutes = @handover_hash['discard_before_minutes'].to_f || 0
     @discard_before_seconds = @handover_hash['discard_before_seconds'].to_f || 0
@@ -20,25 +27,19 @@ class Edit
     @discard_after_minutes = @handover_hash['discard_after_minutes'].to_f || 0
     @discard_after_seconds = @handover_hash['discard_after_seconds'].to_f || 0
     @distinguisher = @handover_hash['distinguisher'].to_s || ""
-    @comment = @handover_hash['comment'].to_s || ""
-    @file_name = @handover_hash['file_name'] || @handover_hash[:file_name] || "name_of_file not set"
-    @extensionless_filename = @file_name.gsub(/\..*/, '')
-    @output_filename = @handover_hash['song'].downcase.gsub(/ /,'-')
-    @artist = @handover_hash['artist']
-=begin
-    #@discard_before = @handover_hash['discard_before'].to_f || "discard_before not set"
-    #@discard_after  = @handover_hash['discard_after'].to_f || "discard_after not set"
-    #@discard_before_mins = sprintf("%02d", @discard_before) + 'm_' + sprintf("%02d", (@discard_before % 1) * 100) + 's__' || "discard_before not set"
-    #@discard_after_mins = sprintf("%02d", @discard_after) + 'm_' + sprintf("%02d", (@discard_after % 1) * 100) + 's'
-    if @discard_after > 0
-      #@split_command = 'mp3splt ' + @file_name + ' ' + sprintf("%.02f", @discard_before) + ' ' + sprintf("%.02f", @discard_after) 
+    @comment = @handover_hash['comment_used_as_location'].to_s || ""
+    @destination_folder = @handover_hash['destination_folder'].to_s || ""
+    p @destination_folder 
+    if @handover_hash['destination_folder'] && @destination_folder[-1] == '/'
+    elsif @handover_hash['destination_folder']
+      @destination_folder = @destination_folder + '/'
     else
-      #@split_command = 'mp3splt ' + @file_name + ' ' + sprintf("%.02f", @discard_before) + ' EOF'
     end
-
-    #@predicted_filename = @extensionless_filename + '_' + @discard_before_mins + @discard_after_mins + '.mp3'
-    #@wildcard_filename = @extensionless_filename + '_' + @discard_before_mins + '*.mp3'
-=end
+    @original_file_name = @handover_hash['file_name'] || @handover_hash[:file_name] || "original_file_name not set"
+    @extensionless_filename = @original_file_name.gsub(/\..*/, '')
+    @output_filename = @handover_hash['song'].downcase.gsub(/ /,'-')
+    @distinguished_original_filename = @original_file_location + @original_file_name
+    @artist = @handover_hash['artist']
   end
 
   def edit_by_ffmpeg
@@ -47,11 +48,13 @@ class Edit
     @discard_after_total_seconds = (@discard_after_hours * 3600) + (@discard_after_minutes * 60) + (@discard_after_seconds)
     @discard_after_calculated_seconds = @discard_after_total_seconds - @discard_before_total_seconds
     @discard_after_cmd = ' -t ' + @discard_after_calculated_seconds.to_s
-    @date_with_month_in_text = @file_name[4,2] + Date::ABBR_MONTHNAMES[@file_name[2,2].to_i].downcase + @file_name[0,2]
+    @date_with_month_in_text = @original_file_name[4,2] + Date::ABBR_MONTHNAMES[@original_file_name[2,2].to_i].downcase + @original_file_name[0,2]
 
     @calculated_filename = @output_filename + '_' + @artist.downcase.gsub(/ /,'-').gsub(/,/,'-').gsub(/--/,'-').gsub(/'/,'-') + '_' + (@distinguisher != "" ? @distinguisher + '-' : "") + (@comment != "" ? @comment.downcase.gsub(/ /,'-') + '-' : "") + @date_with_month_in_text + '.mp3'
     @calculated_filename = @calculated_filename.gsub(/,/,'') 
-    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @file_name + ' -acodec copy ' + @calculated_filename
+    @distinguished_calculated_filename = @destination_folder + @calculated_filename
+
+    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @distinguished_original_filename + ' -acodec copy ' + @distinguished_calculated_filename
   end
 
   def tag_command
@@ -63,7 +66,7 @@ class Edit
         end
       end
     end
-    @tag_command = 'id3v2 "' + @calculated_filename + '"' + set_tags
+    @tag_command = 'id3v2 "' + @distinguished_calculated_filename + '"' + set_tags
   end
 end
 
