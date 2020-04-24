@@ -43,16 +43,22 @@ class Edit
     #@extensionless_filename = @original_file_name.gsub(/\..*/, '')
     @adjusted_opus = @handover_hash['opus'].downcase.gsub(/ /,'-')
     @distinguished_original_filename = @original_file_location + @original_file_name
+    @quoted_distinguished_original_filename = '"' + @distinguished_original_filename + '"'
     @artist = @handover_hash['artist'].to_s || ""
     @composer = @handover_hash['TCOM'].to_s || ""
-    @date_with_month_in_text = @original_file_name[4,2] + Date::ABBR_MONTHNAMES[@original_file_name[2,2].to_i].downcase + @original_file_name[0,2]
-    @date_with_month_in_text_and_spaces = @original_file_name[4,2] + ' ' + Date::ABBR_MONTHNAMES[@original_file_name[2,2].to_i].downcase + ' 20' + @original_file_name[0,2]
-
+    if (@original_file_name[0,2].to_i > 0) && (@original_file_name[2,2].to_i > 0) && (@original_file_name[4,2].to_i > 0)
+      @date_with_month_in_text = @original_file_name[4,2] + Date::ABBR_MONTHNAMES[@original_file_name[2,2].to_i].downcase + @original_file_name[0,2]
+      @date_with_month_in_text_and_spaces = @original_file_name[4,2] + ' ' + Date::ABBR_MONTHNAMES[@original_file_name[2,2].to_i].capitalize + ' 20' + @original_file_name[0,2]
+    else
+      @date_with_month_in_text = ""
+      @date_with_month_in_text_and_spaces = ""
+    end
     @derived_tit2 = @artist + ', ' + @composer + ', ' + @song + ' ' + @handover_hash['opus'] + ', ' + @comment + ' ' + @date_with_month_in_text_and_spaces
     @calculated_filename = 
 @artist.downcase.gsub(/ /,'-').gsub(/,/,'-').gsub(/--/,'-').gsub(/'/,'-') + '_' + (@distinguisher != "" ? @distinguisher + '_' : "") + @adjusted_opus + '_' + (@comment != "" ? @comment.downcase.gsub(/ /,'-') + '_' : "") + @date_with_month_in_text + '.mp3'
     @calculated_filename = @calculated_filename.gsub(/,/,'') 
     @distinguished_calculated_filename = @destination_folder + @calculated_filename
+    @quoted_distinguished_calculated_filename = '"' + @distinguished_calculated_filename + '"'
   end
 
   def edit_by_ffmpeg
@@ -62,12 +68,15 @@ class Edit
     @discard_after_calculated_seconds = @discard_after_total_seconds - @discard_before_total_seconds
     @discard_after_cmd = ' -t ' + @discard_after_calculated_seconds.to_s
 
-    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @distinguished_original_filename + ' -acodec copy ' + @distinguished_calculated_filename
+    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_distinguished_original_filename + ' -acodec copy ' + @quoted_distinguished_calculated_filename
   end
 
   def tag_command
     set_tags = String.new
     @handover_hash.each do |key, value|
+      if key == "TIT2" && value == ""
+        value = self.derived_tit2
+      end
       if @tag_list.include? key.to_s 
         if value != ""
           set_tags = set_tags + ' --' + key.to_s + ' "' + value.to_s + '"'
