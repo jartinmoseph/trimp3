@@ -33,13 +33,14 @@ class Edit
     @distinguisher = @handover_hash['distinguisher'].to_s || ""
     @comment = @handover_hash['comment_used_as_location'].to_s || ""
     @song = @handover_hash['song'].to_s || ""
+    @video_file_name = @handover_hash['video_file_name'].to_s || ""
     @destination_folder = @handover_hash['destination_folder'].to_s || ""
     if @handover_hash['destination_folder'] && @destination_folder[-1] == '/'
     elsif @handover_hash['destination_folder']
       @destination_folder = @destination_folder + '/'
     else
     end
-    @original_file_name = @handover_hash['file_name'] || @handover_hash[:file_name] || "original_file_name not set"
+    @original_file_name = @handover_hash['audio_file_name'] || @handover_hash[:audio_file_name] || "original_file_name not set"
     #@extensionless_filename = @original_file_name.gsub(/\..*/, '')
     @adjusted_opus = @handover_hash['opus'].downcase.gsub(/ /,'-')
     @distinguished_original_filename = @original_file_location + @original_file_name
@@ -71,6 +72,13 @@ class Edit
     'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_distinguished_original_filename + ' -acodec copy ' + @quoted_distinguished_calculated_filename
   end
 
+  def av_simple_merge
+    'ffmpeg -i ' + @original_file_name  + ' -i ' + @video_file_name + ' -c copy ' + @quoted_distinguished_calculated_filename
+  end
+  def av_delayed_merge
+    'ffmpeg -i ' + @original_file_name + ' -itsoffset ' + @handover_hash['audio_delay'] + ' -i ' + @video_file_name + ' -map 0:a -map 1:v -c copy ' + @quoted_distinguished_calculated_filename
+  end
+
   def tag_command
     set_tags = String.new
     @handover_hash.each do |key, value|
@@ -86,10 +94,3 @@ class Edit
     @tag_command = 'id3v2 "' + @distinguished_calculated_filename + '"' + set_tags
   end
 end
-=begin
-  def derive_tit2
-    @year = @handover_hash['TYER']
-    derived_tit2 = String.new
-    derived_tit2 = @year
-  end
-=end

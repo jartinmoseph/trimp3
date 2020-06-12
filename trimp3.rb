@@ -8,7 +8,6 @@ def input(prompt="", newline=false)
   Readline.readline(prompt, true).squeeze(" ").strip
 end
 
-
 puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv /path/to/mp3s/outputfileprefix"
 puts "REMINDER: save csv with tab as field separator"
 puts "ANOTHER THING: csv's with empty fields make it crash"
@@ -16,12 +15,10 @@ puts "have it use the path in the config file to locate the original files"
 
 ConfigFile = ARGV[0]
 CsvFile = ARGV[1]
-#SplitFile = ARGV[2] + "_split\.txt"
-#TagFile = ARGV[2] + "_tag\.txt"
 SplitTagFile = ARGV[2] + "_both_split_then_tag\.txt"
-#SplitHandle = File.open SplitFile,"w+"
-#TagHandle = File.open TagFile,"w+"
 SplitTagHandle = File.open SplitTagFile,"w+"
+CombineFile = ARGV[2] + "_combine_audio_video\.txt"
+CombineHandle = File.open CombineFile,"w+"
 CsvArray = CSV.read CsvFile, {:col_sep => "\t"}
 
 ConfPC = ParseConfig.new ConfigFile
@@ -58,5 +55,6 @@ for row in 1..CsvArray.length-1
   #TagHandle.write this_edit.tag_command.to_s + "\n"
   SplitTagHandle.write this_edit.edit_by_ffmpeg + "\n"
   SplitTagHandle.write this_edit.tag_command.to_s + "\n"
+  CombineHandle.write this_edit.av_merge.to_s + "\n" 
 end
 
