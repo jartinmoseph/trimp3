@@ -29,32 +29,39 @@ TagListFile = ConfHash['tag_list'] || "tag_list not set"
 TagListFileHandle = File.open TagListFile,"r"
 TagListFileString = TagListFileHandle.read.to_s
 
-TrimColumnNamesFile = ConfHash['trim_column_names']
-TrimColumnNamesFileHandle = File.open TrimColumnNamesFile,"r"
-TrimColumnNamesFileString = TrimColumnNamesFileHandle.read
+#TrimColumnNamesFile = ConfHash['trim_column_names']
+#TrimColumnNamesFileHandle = File.open TrimColumnNamesFile,"r"
+#TrimColumnNamesFileString = TrimColumnNamesFileHandle.read
 
 OriginalFileLocation = ConfHash['file_location']
 
 Width = CsvArray.transpose.length
-Length = CsvArray.length
+#Length = CsvArray.length
 ThisLinePlusTitlesArray = Array.new
 ThisLinePlusTitlesHash = Hash.new
 Handover = Hash.new
+A2HHandover = Hash.new
 Handover.update :tag_list => TagListFileString
 Handover.update :original_file_location => OriginalFileLocation
 
 for row in 1..CsvArray.length-1
   ThisLinePlusTitlesArray[0] = CsvArray[0]
   ThisLinePlusTitlesArray[1] = CsvArray[row]
+  A2HHandover.update :array_version => ThisLinePlusTitlesArray 
+  @converter = AHHA.new A2HHandover
+=begin
+  #the following loop needs to go into ArraytoHash 
   for col in 0..Width-1
-    ThisLinePlusTitlesHash[CsvArray[0][col]] = CsvArray[row][col] || ""
+    ThisLinePlusTitlesHash[CsvArray[0][col]] =  ThisLinePlusTitlesArray[1][col] || ""
+    #original line was: ThisLinePlusTitlesHash[CsvArray[0][col]] = CsvArray[row][col] || ""
   end
-  Handover.update :hash => ThisLinePlusTitlesHash, :array => ThisLinePlusTitlesArray
+=end
+  Handover.update :hash => @converter.hash_version, :array => ThisLinePlusTitlesArray
   this_edit = Edit.new Handover
   #SplitHandle.write this_edit.edit_by_ffmpeg + "\n"
   #TagHandle.write this_edit.tag_command.to_s + "\n"
   SplitTagHandle.write this_edit.edit_by_ffmpeg + "\n"
   SplitTagHandle.write this_edit.tag_command.to_s + "\n"
-  CombineHandle.write this_edit.av_merge.to_s + "\n" 
+  CombineHandle.write this_edit.av_simple_merge.to_s + "\n" 
 end
 

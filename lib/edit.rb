@@ -1,5 +1,19 @@
 require "date"
 
+class AHHA
+  def initialize (options = {})
+    @array_version = options[:array_version]
+  end
+  def hash_version
+    @width = @array_version.transpose.length
+    @hash_version = Hash.new
+    for col in 0..@width-1
+      @hash_version[@array_version[0][col]] = @array_version[1][col] || ""
+    end
+    @hash_version
+  end
+end
+
 class Edit
   #attr_reader :predicted_filename
   #attr_reader :wildcard_filename
@@ -73,7 +87,8 @@ class Edit
   end
 
   def av_simple_merge
-    'ffmpeg -i ' + @original_file_name  + ' -i ' + @video_file_name + ' -c copy ' + @quoted_distinguished_calculated_filename
+    'ffmpeg -i ' + @original_file_name  + ' -i ' + @video_file_name + @quoted_distinguished_calculated_filename
+    #'ffmpeg -i ' + @original_file_name  + ' -i ' + @video_file_name + ' -c copy ' + @quoted_distinguished_calculated_filename
   end
   def av_delayed_merge
     'ffmpeg -i ' + @original_file_name + ' -itsoffset ' + @handover_hash['audio_delay'] + ' -i ' + @video_file_name + ' -map 0:a -map 1:v -c copy ' + @quoted_distinguished_calculated_filename
