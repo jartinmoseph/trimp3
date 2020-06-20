@@ -75,8 +75,9 @@ describe 'Edit' do
       @edit5_ffmpeg = Edit.new options_ffmpeg
     end
     subject {@edit5_ffmpeg}
-    xit 'produces a file which merges audio and video from separate files' do
-      expect(@edit5_ffmpeg.av_simple_merge).to eq('ffmpeg -i testsound.mp3 -i MVI_2424_no3_rach.MP4 -c copy MVI_2424_no3_rach_dubbed.mp4')
+    it 'produces a file which merges audio and video from separate files' do
+      #expect(@edit5_ffmpeg.av_simple_merge).to eq('ffmpeg -i testsound.mp3 -i MVI_2424_no3_rach.MP4 -c copy MVI_2424_no3_rach_dubbed.mp4')
+      expect(@edit5_ffmpeg.av_simple_merge).to eq('ffmpeg -i 190917_0688.MP3 -i MVI_2424_no3_rach.MP4 "/Users/martinpick/Dropbox/sqbx/2019/2019_alberti/sue-clark-david-winder_3_k381_17sep19.mp4"')
     end 
     subject {@edit5_ffmpeg}
     xit 'produces a file with video from mp4 and audio from mp3 with delayed audio' do

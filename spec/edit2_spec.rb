@@ -93,26 +93,53 @@ describe 'Edit' do
   context 'split by ffmpeg' do
     before :each do
       @tag_list = "genre,year,artist" 
-      @hash_version_of_data = {'audio_file_name' => "180919_0688.MP3", 'discard_before_hours' => "0", 'discard_before_minutes' => "0", 'discard_before_seconds' => "52", 'discard_after_hours' => "0", 'discard_after_minutes' => "5", 'discard_after_seconds' => "0", 'artist' => "Martin Pickersgill", 'album' => "Alberti", 'opus' => "BWV847", 'genre' => "32", 'TYER' => "2018", 'TIT2' => "Martin Pickersgill, J S Bach, Prelude in C Minor, Bk 1, Alberti, 19 Sept 2018", 'comment_used_as_location' => "Cross St Chapel"}
+      #@hash_version_of_data = {'audio_file_name' => "180919_0688.MP3", 'discard_before_hours' => "0", 'discard_before_minutes' => "0", 'discard_before_seconds' => "52", 'discard_after_hours' => "0", 'discard_after_minutes' => "5", 'discard_after_seconds' => "0", 'artist' => "Martin Pickersgill", 'album' => "Alberti", 'opus' => "BWV847", 'genre' => "32", 'TYER' => "2018", 'TIT2' => "Martin Pickersgill, J S Bach, Prelude in C Minor, Bk 1, Alberti, 19 Sept 2018", 'comment_used_as_location' => "Cross St Chapel"}
       @array_version_of_data = [["audio_file_name", 
 "discard_before_hours", 
-"discard_before_mins", 
+"discard_before_minutes", 
 "discard_before_seconds", 
 "discard_before",
 "discard_after_hours", 
-"discard_after_mins", 
+"discard_after_minutes", 
 "discard_after_seconds", 
 "discard_after", 
-"artist", "album", "opus", "genre", "TYER", "TIT2", "comment_used_as_location"],["180919_0688.MP3", "0", "0", "52", "0.53", "0", "5", "0", "1", "Martin Pickersgill", "Alberti", "BWV847", "32", "2018", "Martin Pickersgill, J S Bach, Prelude in C Minor, Bk 1, Alberti, 19 Sept 2018", "Cross St Chapel"]]
-      options_ffmpeg = {:tag_list => @tag_list, :hash => @hash_version_of_data, :array => @array_version_of_data}
+"artist",
+ "album",
+ "opus",
+ "genre",
+ "TYER",
+ "TIT2",
+ "comment_used_as_location"],
+["180919_0688.MP3",
+ "0",
+ "0",
+ "52",
+ "0.53",
+ "0",
+ "5",
+ "0",
+ "1",
+ "Martin Pickersgill",
+ "Alberti",
+ "BWV847",
+ "32",
+ "2018",
+ "Martin Pickersgill, J S Bach, Prelude in C Minor, Bk 1, Alberti, 19 Sept 2018",
+ "Cross St Chapel"]]
+      options_ffmpeg = {:tag_list => @tag_list, :array => @array_version_of_data}
       @edit1_ffmpeg = Edit.new options_ffmpeg
     end
     subject {@edit1_ffmpeg}
     it {should respond_to :edit_by_ffmpeg}
+    it 'calculates the number of seconds' do
+      expect(@edit1_ffmpeg.discard_after_minutes).to eq 5
+      expect(@edit1_ffmpeg.discard_after_minutes.class).to eq Float
+
+    end
     it 'can return an ffmpeg command to split the file using hours minutes seconds, subtracting the time taken off the beginning to allow the original elapsed time to be put in the spreadsheet, for both beginning and end points' do
       expect(@edit1_ffmpeg.edit_by_ffmpeg).to eq('ffmpeg -ss 52.0 -t 248.0 -i "180919_0688.MP3" -acodec copy "martin-pickersgill_bwv847_cross-st-chapel_19sep18.mp3"')
     end
-    it 'produces an output filename of format artist_opus_location_date' do
+    xit 'produces an output filename of format artist_opus_location_date' do
       expect(@edit1_ffmpeg.edit_by_ffmpeg).to eq('ffmpeg -ss 52.0 -t 248.0 -i "180919_0688.MP3" -acodec copy "martin-pickersgill_bwv847_cross-st-chapel_19sep18.mp3"')
     end
   end

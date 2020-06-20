@@ -4,10 +4,10 @@ class AHHA
   def initialize (options = {})
     @array_version = options[:array_version]
   end
-  def hash_version
-    @width = @array_version.transpose.length
+  def hash_version 
+    @length = @array_version[0].length
     @hash_version = Hash.new
-    for col in 0..@width-1
+    for col in 0..@length-1
       @hash_version[@array_version[0][col]] = @array_version[1][col] || ""
     end
     @hash_version
@@ -15,24 +15,24 @@ class AHHA
 end
 
 class Edit
-  #attr_reader :predicted_filename
-  #attr_reader :wildcard_filename
-  #attr_reader :split_command
-  #attr_reader :extensionless_filename
-  #attr_reader :edit_by_ffmpeg
   attr_reader :discard_after_calculated_seconds
   attr_reader :adjusted_opus
   attr_reader :destination_folder
   attr_reader :original_file_location
   attr_reader :date_with_month_in_text_and_spaces
   attr_reader :derived_tit2
-  attr_reader :calculated_filename
+  attr_reader :calculated_audio_filename
 
   def initialize (options = {})
-    @handover_hash = options[:hash]
     @handover_array = options[:array]
+    @a2h_handover_hash = Hash.new
+    @a2h_handover_hash.update :array_version => @handover_array
+    @converter = AHHA.new @a2h_handover_hash
+    @handover_hash = @converter.hash_version
+
     @tag_list = options[:tag_list].to_s || "tag list not set"
-    @original_file_location = options[:original_file_location] || ""
+    #@original_file_location = options[:original_file_location] || ""
+    @original_file_location = @handover_hash['audio_file_location'].to_s || options[:original_file_location] || ""
     if options[:original_file_location] && @original_file_location[-1] == '/'
     elsif options[:original_file_location]
       @original_file_location = @original_file_location + '/'
@@ -69,11 +69,14 @@ class Edit
       @date_with_month_in_text_and_spaces = ""
     end
     @derived_tit2 = @artist + ', ' + @composer + ', ' + @song + ' ' + @handover_hash['opus'] + ', ' + @comment + ' ' + @date_with_month_in_text_and_spaces
-    @calculated_filename = 
-@artist.downcase.gsub(/ /,'-').gsub(/,/,'-').gsub(/--/,'-').gsub(/'/,'-') + '_' + (@distinguisher != "" ? @distinguisher + '_' : "") + @adjusted_opus + '_' + (@comment != "" ? @comment.downcase.gsub(/ /,'-') + '_' : "") + @date_with_month_in_text + '.mp3'
-    @calculated_filename = @calculated_filename.gsub(/,/,'') 
-    @distinguished_calculated_filename = @destination_folder + @calculated_filename
-    @quoted_distinguished_calculated_filename = '"' + @distinguished_calculated_filename + '"'
+    @calculated_extensionless_filename = @artist.downcase.gsub(/ /,'-').gsub(/,/,'-').gsub(/--/,'-').gsub(/'/,'-') + '_' + (@distinguisher != "" ? @distinguisher + '_' : "") + @adjusted_opus + '_' + (@comment != "" ? @comment.downcase.gsub(/ /,'-') + '_' : "") + @date_with_month_in_text 
+    #@calculated_audio_filename = @artist.downcase.gsub(/ /,'-').gsub(/,/,'-').gsub(/--/,'-').gsub(/'/,'-') + '_' + (@distinguisher != "" ? @distinguisher + '_' : "") + @adjusted_opus + '_' + (@comment != "" ? @comment.downcase.gsub(/ /,'-') + '_' : "") + @date_with_month_in_text + '.mp3'
+    @calculated_extensionless_filename = @calculated_extensionless_filename.gsub(/,/,'') 
+    @distinguished_calculated_extensionless_filename = @destination_folder + @calculated_extensionless_filename
+    @distinguished_calculated_audio_filename = @distinguished_calculated_extensionless_filename + '.mp3'
+    @distinguished_calculated_video_filename = @distinguished_calculated_extensionless_filename + '.mp4'
+    @quoted_distinguished_calculated_audio_filename = '"' + @distinguished_calculated_audio_filename + '"'
+    @quoted_distinguished_calculated_video_filename = '"' + @distinguished_calculated_video_filename + '"'
   end
 
   def edit_by_ffmpeg
@@ -83,15 +86,14 @@ class Edit
     @discard_after_calculated_seconds = @discard_after_total_seconds - @discard_before_total_seconds
     @discard_after_cmd = ' -t ' + @discard_after_calculated_seconds.to_s
 
-    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_distinguished_original_filename + ' -acodec copy ' + @quoted_distinguished_calculated_filename
+    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_distinguished_original_filename + ' -acodec copy ' + @quoted_distinguished_calculated_audio_filename
   end
 
   def av_simple_merge
-    'ffmpeg -i ' + @original_file_name  + ' -i ' + @video_file_name + @quoted_distinguished_calculated_filename
-    #'ffmpeg -i ' + @original_file_name  + ' -i ' + @video_file_name + ' -c copy ' + @quoted_distinguished_calculated_filename
+    'ffmpeg -i ' + @original_file_name  + ' -i ' + @video_file_name + ' ' + @quoted_distinguished_calculated_video_filename
   end
   def av_delayed_merge
-    'ffmpeg -i ' + @original_file_name + ' -itsoffset ' + @handover_hash['audio_delay'] + ' -i ' + @video_file_name + ' -map 0:a -map 1:v -c copy ' + @quoted_distinguished_calculated_filename
+    'ffmpeg -i ' + @original_file_name + ' -itsoffset ' + @handover_hash['audio_delay'] + ' -i ' + @video_file_name + ' -map 0:a -map 1:v -c copy ' + @quoted_distinguished_calculated_audio_filename
   end
 
   def tag_command
@@ -106,6 +108,6 @@ class Edit
         end
       end
     end
-    @tag_command = 'id3v2 "' + @distinguished_calculated_filename + '"' + set_tags
+    @tag_command = 'id3v2 "' + @distinguished_calculated_audio_filename + '"' + set_tags
   end
 end

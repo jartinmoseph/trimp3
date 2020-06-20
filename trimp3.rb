@@ -1,67 +1,50 @@
 require "csv"
 require "./lib/edit.rb"
 require "parseconfig"
-#require "readline"
-#require 'readline'
-def input(prompt="", newline=false)
-  prompt += "\n" if newline
-  Readline.readline(prompt, true).squeeze(" ").strip
-end
+require "FileUtils"
 
 puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv /path/to/mp3s/outputfileprefix"
 puts "REMINDER: save csv with tab as field separator"
 puts "ANOTHER THING: csv's with empty fields make it crash"
-puts "have it use the path in the config file to locate the original files"
-
-ConfigFile = ARGV[0]
-CsvFile = ARGV[1]
+puts "COMMAND LINE PARAMETERS:" + ARGV.inspect
 SplitTagFile = ARGV[2] + "_both_split_then_tag\.txt"
 SplitTagHandle = File.open SplitTagFile,"w+"
-CombineFile = ARGV[2] + "_combine_audio_video\.txt"
-CombineHandle = File.open CombineFile,"w+"
-CsvArray = CSV.read CsvFile, {:col_sep => "\t"}
+CombineAVFile = ARGV[2] + "_combine_audio_video\.txt"
+puts "FILE TO COMBINE AUDIO AND VIDEO IS " + CombineAVFile.inspect 
+CombineAVHandle = File.open CombineAVFile,"w+"
 
+ConfigFile = ARGV[0]
 ConfPC = ParseConfig.new ConfigFile
 ConfHash = ConfPC.params.freeze
-puts "CONFIG:" + ConfHash.inspect
+puts "CONFIG HASH IS " + ConfHash.inspect 
+
+CsvFile = ARGV[1]
+CsvArray = CSV.read CsvFile, {:col_sep => "\t"}
 
 TagListFile = ConfHash['tag_list'] || "tag_list not set"
 TagListFileHandle = File.open TagListFile,"r"
 TagListFileString = TagListFileHandle.read.to_s
-
-#TrimColumnNamesFile = ConfHash['trim_column_names']
-#TrimColumnNamesFileHandle = File.open TrimColumnNamesFile,"r"
-#TrimColumnNamesFileString = TrimColumnNamesFileHandle.read
-
-OriginalFileLocation = ConfHash['file_location']
+OriginalFileLocationFromConfig = ConfHash['file_location']
 
 Width = CsvArray.transpose.length
-#Length = CsvArray.length
 ThisLinePlusTitlesArray = Array.new
 ThisLinePlusTitlesHash = Hash.new
 Handover = Hash.new
 A2HHandover = Hash.new
 Handover.update :tag_list => TagListFileString
-Handover.update :original_file_location => OriginalFileLocation
+Handover.update :original_file_location => OriginalFileLocationFromConfig
 
 for row in 1..CsvArray.length-1
   ThisLinePlusTitlesArray[0] = CsvArray[0]
   ThisLinePlusTitlesArray[1] = CsvArray[row]
   A2HHandover.update :array_version => ThisLinePlusTitlesArray 
   @converter = AHHA.new A2HHandover
-=begin
-  #the following loop needs to go into ArraytoHash 
-  for col in 0..Width-1
-    ThisLinePlusTitlesHash[CsvArray[0][col]] =  ThisLinePlusTitlesArray[1][col] || ""
-    #original line was: ThisLinePlusTitlesHash[CsvArray[0][col]] = CsvArray[row][col] || ""
-  end
-=end
-  Handover.update :hash => @converter.hash_version, :array => ThisLinePlusTitlesArray
+  Handover.update :array => ThisLinePlusTitlesArray
+  #Handover.update :hash => @converter.hash_version, :array => ThisLinePlusTitlesArray
   this_edit = Edit.new Handover
-  #SplitHandle.write this_edit.edit_by_ffmpeg + "\n"
-  #TagHandle.write this_edit.tag_command.to_s + "\n"
   SplitTagHandle.write this_edit.edit_by_ffmpeg + "\n"
   SplitTagHandle.write this_edit.tag_command.to_s + "\n"
-  CombineHandle.write this_edit.av_simple_merge.to_s + "\n" 
+  CombineAVHandle.write this_edit.av_simple_merge.to_s + "\n" 
 end
-
+FileUtils.chmod 0774, CombineAVFile 
+FileUtils.chmod 0774, SplitTagFile 
