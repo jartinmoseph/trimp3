@@ -4,6 +4,7 @@ require "parseconfig"
 require "FileUtils"
 
 puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv /path/to/mp3s/outputfileprefix"
+puts "NOTE: if the video file exists, it is treated as the principal file"
 puts "REMINDER: save csv with tab as field separator"
 puts "ANOTHER THING: csv's with empty fields make it crash"
 puts "COMMAND LINE PARAMETERS:" + ARGV.inspect
