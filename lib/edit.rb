@@ -46,6 +46,11 @@ class Edit
     @artist = @handover_hash['artist'].to_s || ""
     @composer = @handover_hash['TCOM'].to_s || ""
     @distinguished_input_video_file_path = Path.new :path => @video_file_location, :extra => @video_file_name
+    @distinguished_input_video_file_str = @distinguished_input_video_file_path.with_extension 
+    @quoted_dist_input_video_str = Path.new(:path => @distinguished_input_video_file_str).dquoty
+    @distinguished_input_audio_file_path = Path.new :path => @audio_file_location, :extra => @audio_file_name
+    @distinguished_input_audio_file_str = @distinguished_input_audio_file_path.with_extension
+    @quoted_dist_input_audio_str = Path.new(:path => @distinguished_input_audio_file_str).dquoty
     if @distinguished_input_video_file_path.path == ""
       @principal_file_name = @audio_file_name
       @principal_file_location = @audio_file_location
@@ -68,22 +73,25 @@ class Edit
     @calculated_extensionless_output_filename = @artist.downcase.gsub(/ /,'-').gsub(/,/,'-').gsub(/--/,'-').gsub(/'/,'-') + '_' + (@distinguisher != "" ? @distinguisher + '_' : "") + @adjusted_opus + '_' + (@comment != "" ? @comment.downcase.gsub(/ /,'-') + '_' : "") + @date_with_month_in_text
     @calculated_extensionless_output_filename = @calculated_extensionless_output_filename.gsub(/,/,'') 
     @distinguished_calculated_extensionless_output_filename_path = Path.new :path => @dest_folder_path.path, :extra => @calculated_extensionless_output_filename
-    @distinguished_calculated_output_filename = (Path.new :path => @distinguished_calculated_extensionless_output_filename_path.extended, :extra => @principal_file_extension).with_extension
+    @distinguished_calculated_output_filename = (Path.new :path => @distinguished_calculated_extensionless_output_filename_path.extended, :extension_to_add => @principal_file_extension).with_extension
     @quoted_distinguished_calculated_output_filename_str = (Path.new :path => @distinguished_calculated_output_filename).dquoty
-  end
-
-  def edit_by_ffmpeg
     @discard_before_total_seconds = (@discard_before_hours * 3600) + (@discard_before_minutes * 60) + (@discard_before_seconds)
     @discard_before_cmd = '-ss ' + @discard_before_total_seconds.to_s
     @discard_after_total_seconds = (@discard_after_hours * 3600) + (@discard_after_minutes * 60) + (@discard_after_seconds)
     @discard_after_calculated_seconds = @discard_after_total_seconds - @discard_before_total_seconds
     @discard_after_cmd = ' -t ' + @discard_after_calculated_seconds.to_s
+  end
 
-    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_distinguished_principal_filename + ' -acodec copy ' + @quoted_distinguished_calculated_output_filename_str 
+  def edit_by_ffmpeg
+    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_distinguished_principal_filename + ' -vcodec copy -acodec copy ' + @quoted_distinguished_calculated_output_filename_str
+  end
+
+  def av_trim_merge
+    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_dist_input_audio_str + ' ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_dist_input_video_str + ' ' + @quoted_distinguished_calculated_output_filename_str
   end
 
   def av_simple_merge
-    'ffmpeg -i ' + @audio_file_name + ' -i ' + @video_file_name + ' ' + @quoted_distinguished_calculated_output_filename_str
+    'ffmpeg -i ' + @quoted_dist_input_audio_str + ' -i ' + @quoted_dist_input_video_str + ' ' + @quoted_distinguished_calculated_output_filename_str
   end
   def av_delayed_merge
     'ffmpeg -i ' + @audio_file_name + ' -itsoffset ' + @handover_hash['audio_delay'] + ' -i ' + @video_file_name + ' -map 0:a -map 1:v -c copy ' + @quoted_distinguished_calculated_output_filename_str
@@ -105,27 +113,6 @@ class Edit
   end
 end
 
-class Path < String
-  attr_reader :path
-  def initialize (options = {})
-    @path = options[:path]
-    @extra = options[:extra]
-    @path.chars[-1] == '/' ?  @path = @path.chop : @path
-  end
-  def dquoty
-    '"' + @path + '"'
-  end
-  def extended
-    @path + '/' + @extra
-  end
-  def extension
-    (File.extname @path).downcase
-  end
-  def with_extension
-    @path + @extra
-  end
-end
-
 class AHHA
   def initialize (options = {})
     @array_version = options[:array_version]
@@ -137,6 +124,26 @@ class AHHA
       @hash_version[@array_version[0][col]] = @array_version[1][col] || ""
     end
     @hash_version
+  end
+end
+
+class Path < String
+  attr_reader :path
+  attr_reader :extension
+  attr_reader :dquoty
+  attr_reader :extended
+  attr_reader :extended_quoty 
+  attr_reader :with_extension
+  def initialize (options = {})
+    @path = options[:path] || ""
+    @path.chars[-1] == '/' ?  @path = @path.chop : @path
+    @dquoty = '"' + @path + '"'
+    @extra = options[:extra] || ""
+    @extension_to_add = options[:extension_to_add] || ""
+    @extension_to_add[0] == '.' ? @extension_to_add[0] = '' : @extension_to_add
+    @extension = (File.extname @path).downcase
+    @extra == "" ? @extended = @path : @extended = @path + '/' + @extra
+    @extension_to_add == "" ? @with_extension = @extended : @with_extension = @extended + '.' + @extension_to_add
   end
 end
 

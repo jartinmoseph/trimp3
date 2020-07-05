@@ -1,7 +1,7 @@
 require "csv"
 require "./lib/edit.rb"
 require "parseconfig"
-require "FileUtils"
+#require "FileUtils"
 
 puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv /path/to/mp3s/outputfileprefix"
 puts "NOTE: if the video file exists, it is treated as the principal file"
@@ -34,7 +34,6 @@ Handover = Hash.new
 A2HHandover = Hash.new
 Handover.update :tag_list => TagListFileString
 Handover.update :original_file_location => OriginalFileLocationFromConfig
-
 for row in 1..CsvArray.length-1
   ThisLinePlusTitlesArray[0] = CsvArray[0]
   ThisLinePlusTitlesArray[1] = CsvArray[row]
@@ -45,7 +44,10 @@ for row in 1..CsvArray.length-1
   this_edit = Edit.new Handover
   SplitTagHandle.write this_edit.edit_by_ffmpeg + "\n"
   SplitTagHandle.write this_edit.tag_command.to_s + "\n"
-  CombineAVHandle.write this_edit.av_simple_merge.to_s + "\n" 
+  CombineAVHandle.write this_edit.av_trim_merge.to_s + "\n" 
+  #CombineAVHandle.write this_edit.av_simple_merge.to_s + "\n" 
 end
 FileUtils.chmod 0774, CombineAVFile 
 FileUtils.chmod 0774, SplitTagFile 
+=begin
+=end
