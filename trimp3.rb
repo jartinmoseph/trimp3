@@ -44,7 +44,6 @@ for row in 1..CsvArray.length-1
   ThisLinePlusTitlesArray[1] = CsvArray[row]
   #A2HHandover.update :array_version => ThisLinePlusTitlesArray 
   #@converter = AHHA.new A2HHandover
-  puts "Handover is " + Handover.inspect
   Handover.update :array => ThisLinePlusTitlesArray
   this_edit = Edit.new Handover
   unless this_edit.process_this_line == "n"

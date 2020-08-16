@@ -12,13 +12,9 @@ class Edit
   attr_reader :quoted_dist_input_audio_str 
   attr_reader :quoted_dist_input_video_str 
   attr_reader :calculated_extensionless_output_filename
-  #attr_reader :quoted_distinguished_principal_filename 
-  attr_reader :quoted_distinguished_calculated_output_filename_str 
-  attr_reader :calculated_extensionless_trimmed_output_filename
-  attr_reader :quoted_distinguished_calculated_trimmed_output_filename
-  attr_reader :fade_trim_calcd_extnless_oput_fname 
-  attr_reader :q_fade_trim_calcd_dist_oput_fname 
 
+  attr_reader :concat_file_name
+  attr_reader :concat_order
   attr_reader :video_ffmpeg_duration
   attr_reader :fade_out_start
   attr_reader :calculated_duration_in_secs
@@ -122,16 +118,6 @@ class Edit
 
     #@calculated_extensionless_output_filename = @adjusted_artist + (@distinguisher != "" ? @distinguisher + '_' : "") + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
     @calculated_extensionless_output_filename = @filename_builder.calculated_extensionless_output_filename 
-    #@quoted_distinguished_calculated_output_filename_str = (Path.new :path => @filename_builder.destination_folder, :extra => @calculated_extensionless_output_filename, :extension_to_add => @principal_file_extension).full_path_in_dquotes
-    @quoted_distinguished_calculated_output_filename_str = @filename_builder.quoted_distinguished_calculated_output_filename_str 
-    #@calculated_extensionless_trimmed_output_filename = @filename_builder.calculated_extensionless_trimmed_output_filename
-    #@calculated_extensionless_trimmed_output_filename = @adjusted_artist + 'tr' + @distinguisher + '_' + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
-    @fade_trim_calcd_extnless_oput_fname = @filename_builder.fade_trim_calcd_extnless_oput_fname 
-    #@fade_trim_calcd_extnless_oput_fname = @adjusted_artist + 'tf' + @distinguisher + '_' + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
-    @q_fade_trim_calcd_dist_oput_fname = @filename_builder.q_fade_trim_calcd_dist_oput_fname 
-    #@q_fade_trim_calcd_dist_oput_fname = (Path.new :path => @filename_builder.destination_folder, :extra => @fade_trim_calcd_extnless_oput_fname, :extension_to_add => @principal_file_extension).full_path_in_dquotes
-    @quoted_distinguished_calculated_trimmed_output_filename = @filename_builder.quoted_distinguished_calculated_trimmed_output_filename 
-    #@quoted_distinguished_calculated_trimmed_output_filename = (Path.new :path => @filename_builder.destination_folder, :extra => @filename_builder.calculated_extensionless_trimmed_output_filename, :extension_to_add => @principal_file_extension).full_path_in_dquotes
     #@calculated_extensionless_output_filename = @calculated_extensionless_output_filename.gsub(/,/,'') 
     @discard_before_total_seconds = (@discard_before_hours * 3600) + (@discard_before_minutes * 60) + (@discard_before_seconds)
     @discard_before_cmd = '-ss ' + @discard_before_total_seconds.to_s
@@ -158,7 +144,7 @@ class Edit
   end
   def fade_trimmed_file
     if @fade == "y" && @process_this_line != "n"
-      'ffmpeg -i ' + @filename_builder.quoted_dist_trimmed_temp_output_filename + ' -vf "fade=type=in:duration=1,fade=type=out:duration=1:start_time=' + @fade_out_start.to_s + '" -c:a copy ' + @q_fade_trim_calcd_dist_oput_fname 
+      'ffmpeg -i ' + @filename_builder.quoted_dist_trimmed_temp_output_filename + ' -vf "fade=type=in:duration=1,fade=type=out:duration=1:start_time=' + @fade_out_start.to_s + '" -c:a copy ' + @filename_builder.q_fade_trim_calcd_dist_oput_fname 
     else ""
     end
   end
@@ -168,23 +154,22 @@ class Edit
     'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @filename_builder.quoted_distinguished_principal_filename + ' -vcodec copy -acodec copy ' + @filename_builder.quoted_dist_trimmed_temp_output_filename
     else ""
     end
-    #'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_distinguished_principal_filename + ' -vcodec copy -acodec copy ' + @quoted_distinguished_calculated_trimmed_output_filename
   end
 
   def av_trim_merge
     if @mode == "merge"
-      'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_dist_input_audio_str + ' ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_dist_input_video_str + ' ' + @quoted_distinguished_calculated_trimmed_output_filename
+      'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_dist_input_audio_str + ' ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_dist_input_video_str + ' ' + @filename_builder.quoted_distinguished_calculated_trimmed_output_filename
     else ""
     end
   end
   def av_simple_merge
     if @mode == "merge" && (@discard_before_total_seconds + @discard_after_total_seconds == 0)
-      'ffmpeg -i ' + @quoted_dist_input_audio_str + ' -i ' + @quoted_dist_input_video_str + ' ' + @quoted_distinguished_calculated_output_filename_str
+      'ffmpeg -i ' + @quoted_dist_input_audio_str + ' -i ' + @quoted_dist_input_video_str + ' ' + @filename_builder.quoted_distinguished_calculated_output_filename_str
     else ""
     end
   end
   def av_delayed_merge
-    'ffmpeg -i ' + @audio_file_name + ' -itsoffset ' + @handover_hash['audio_delay'] + ' -i ' + @filename_builder.video_file_name + ' -map 0:a -map 1:v -c copy ' + @quoted_distinguished_calculated_output_filename_str
+    'ffmpeg -i ' + @audio_file_name + ' -itsoffset ' + @handover_hash['audio_delay'] + ' -i ' + @filename_builder.video_file_name + ' -map 0:a -map 1:v -c copy ' + @filename_builder.quoted_distinguished_calculated_output_filename_str
   end
 
   def tag_command
@@ -199,7 +184,7 @@ class Edit
         end
       end
     end
-    @tag_command = 'id3v2 ' + @quoted_distinguished_calculated_output_filename_str + set_tags
+    @tag_command = 'id3v2 ' + @filename_builder.quoted_distinguished_calculated_output_filename_str + set_tags
   end
 end
 
@@ -263,6 +248,7 @@ class FilenameBuilder < String
   attr_reader :destination_folder
   attr_reader :temp_folder
   attr_reader :artist
+  attr_reader :concat_file_name
 
   attr_reader :quoted_dist_input_audio_str 
   attr_reader :quoted_dist_input_video_str #
@@ -290,6 +276,7 @@ class FilenameBuilder < String
     @video_file_name = options['video_file_name'].to_s || ""
     @destination_folder = options['destination_folder'].to_s || ""
     @temp_folder = options['temp_folder'].to_s || ""
+    @concat_file_name = options['concat_file_name'].to_s + '.txt' || ""
 #FilenameBuilder
     if (@audio_file_name[0,2].to_i > 0) && (@audio_file_name[2,2].to_i > 0) && (@audio_file_name[4,2].to_i > 0)
       @date_with_month_in_text = @audio_file_name[4,2] + Date::ABBR_MONTHNAMES[@audio_file_name[2,2].to_i].downcase + @audio_file_name[0,2]
