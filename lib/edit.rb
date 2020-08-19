@@ -12,9 +12,12 @@ class Edit
   attr_reader :quoted_dist_input_audio_str 
   attr_reader :quoted_dist_input_video_str 
   attr_reader :calculated_extensionless_output_filename
+  attr_reader :unquoted_dist_tmp_folder
 
   attr_reader :concat_file_name
-  attr_reader :concat_order
+  attr_reader :dist_concat_file_name
+  attr_reader :concat_line
+
   attr_reader :video_ffmpeg_duration
   attr_reader :fade_out_start
   attr_reader :calculated_duration_in_secs
@@ -41,6 +44,11 @@ class Edit
     @hash_temp = {'temp_folder' => @temp_folder}
     @handover_hash.update @hash_temp
     @filename_builder = FilenameBuilder.new @handover_hash
+
+    @concat_file_name = @handover_hash['concat_file_name']
+    @dist_concat_file_name = @filename_builder.dist_concat_file_name
+    @concat_line = @filename_builder.concat_line
+    @unquoted_dist_tmp_folder = @filename_builder.unquoted_dist_tmp_folder
 
     @tag_list = options[:tag_list].to_s || "tag list not set"
     @discard_before_hours = @handover_hash['discard_before_hours'].to_f || 0
@@ -210,32 +218,6 @@ class AHHA
   end
 end
 
-class Path < String
-  attr_reader :path
-  attr_reader :extension
-  attr_reader :dquoty
-  attr_reader :extended
-  attr_reader :extended_quoty 
-  attr_reader :with_extension
-  attr_reader :full_path
-  attr_reader :full_path_in_dquotes
-  def initialize (options = {})
-    @path = options[:path] || ""
-    @path.chars[-1] == '/' ?  @path = @path.chop : @path
-    @extra = options[:extra] || ""
-    @extr2 = options[:extr2] || ""
-    @extension_to_add = options[:extension_to_add] || ""
-    @extension_to_add[0] == '.' ? @extension_to_add[0] = '' : @extension_to_add
-    @extension = (File.extname @path).downcase
-    @extra == "" ? @extended = @path : @extended = @path + '/' + @extra
-    @extr2 == "" ? @extended = @extended : @extended = @extended + '/' + @extr2
-    @extension_to_add == "" ? @with_extension = @extended : @with_extension = @extended + '.' + @extension_to_add
-    @extension_to_add == "" ? @full_path = @extended : @full_path = @extended + '.' + @extension_to_add
-    @dquoty = @path.dquote 
-    @full_path_in_dquotes = @full_path.dquote
-    #@full_path_in_dquotes = @full_path.dquote.gsub('//','/') 
-  end
-end
 
 class FilenameBuilder < String
   attr_reader :distinguisher
@@ -249,6 +231,7 @@ class FilenameBuilder < String
   attr_reader :temp_folder
   attr_reader :artist
   attr_reader :concat_file_name
+  attr_reader :concat_order
 
   attr_reader :quoted_dist_input_audio_str 
   attr_reader :quoted_dist_input_video_str #
@@ -258,12 +241,15 @@ class FilenameBuilder < String
   attr_reader :quoted_distinguished_calculated_output_filename_str 
   attr_reader :calculated_extensionless_trimmed_output_filename
   attr_reader :quoted_distinguished_calculated_trimmed_output_filename
+  attr_reader :unquoted_distinguished_calculated_trimmed_output_filename
   attr_reader :fade_trim_calcd_extnless_oput_fname 
   attr_reader :q_fade_trim_calcd_dist_oput_fname 
   attr_reader :quoted_dist_trimmed_temp_output_filename
   attr_reader :quoted_dist_tmp_folder
   attr_reader :unquoted_dist_tmp_folder
   attr_reader :principal_file_extension
+  attr_reader :dist_concat_file_name
+  attr_reader :concat_line
 #FilenameBuilder
   def initialize (options = {})
     @distinguisher = options['distinguisher'] || ""
@@ -276,7 +262,10 @@ class FilenameBuilder < String
     @video_file_name = options['video_file_name'].to_s || ""
     @destination_folder = options['destination_folder'].to_s || ""
     @temp_folder = options['temp_folder'].to_s || ""
-    @concat_file_name = options['concat_file_name'].to_s + '.txt' || ""
+    @concat_file_name = options['concat_file_name'].to_s || ""
+    @concat_order = options['concat_order'].to_s || ""
+
+    options['concat_file_name'].to_s ? @concat_file_name = 'concat_' + @concat_file_name + '.txt': @concat_file_name
 #FilenameBuilder
     if (@audio_file_name[0,2].to_i > 0) && (@audio_file_name[2,2].to_i > 0) && (@audio_file_name[4,2].to_i > 0)
       @date_with_month_in_text = @audio_file_name[4,2] + Date::ABBR_MONTHNAMES[@audio_file_name[2,2].to_i].downcase + @audio_file_name[0,2]
@@ -308,12 +297,14 @@ class FilenameBuilder < String
     @calculated_extensionless_trimmed_output_filename = @adjusted_artist + 'tr' + @distinguisher + '_' + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
     @fade_trim_calcd_extnless_oput_fname              = @adjusted_artist + 'tf' + @distinguisher + '_' + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
     @quoted_distinguished_calculated_trimmed_output_filename = (Path.new :path => @destination_folder, :extra => @calculated_extensionless_trimmed_output_filename, :extension_to_add => @principal_file_extension).full_path_in_dquotes
+    @unquoted_distinguished_calculated_trimmed_output_filename = (Path.new :path => @destination_folder, :extra => @calculated_extensionless_trimmed_output_filename, :extension_to_add => @principal_file_extension).full_path
     @q_fade_trim_calcd_dist_oput_fname = (Path.new :path => options['destination_folder'], :extra => @fade_trim_calcd_extnless_oput_fname, :extension_to_add => @principal_file_extension).full_path_in_dquotes
-    @quoted_dist_trimmed_temp_output_filename = (Path.new :path => options['destination_folder'], :extra => @temp_folder, :extr2 => @calculated_extensionless_trimmed_output_filename, :extension_to_add => @principal_file_extension).full_path_in_dquotes
     @quoted_dist_tmp_folder = (Path.new :path => options['destination_folder'], :extra => @temp_folder).full_path_in_dquotes
+    @quoted_dist_trimmed_temp_output_filename = (Path.new :path => options['destination_folder'], :extra => @temp_folder, :extr2 => @calculated_extensionless_trimmed_output_filename, :extension_to_add => @principal_file_extension).full_path_in_dquotes
     @unquoted_dist_tmp_folder = (Path.new :path => options['destination_folder'], :extra => @temp_folder).full_path
 
-    FileUtils.mkdir_p @unquoted_dist_tmp_folder unless Dir.exist? @unquoted_dist_tmp_folder
+    @dist_concat_file_name = (Path.new :path => options['destination_folder'], :extra => @temp_folder, :extr2 => concat_file_name).full_path
+    @concat_line = @concat_order + "file '" + @unquoted_distinguished_calculated_trimmed_output_filename + "'"
   end
 
 #FilenameBuilder
@@ -340,4 +331,30 @@ class FilenameBuilder < String
     @principal_filename
   end
 #FilenameBuilder
+end
+
+class Path < String
+  attr_reader :path
+  attr_reader :extension
+  attr_reader :dquoty
+  attr_reader :extended
+  attr_reader :extended_quoty 
+  attr_reader :with_extension
+  attr_reader :full_path
+  attr_reader :full_path_in_dquotes
+  def initialize (options = {})
+    @path = options[:path] || ""
+    @path.chars[-1] == '/' ?  @path = @path.chop : @path
+    @extra = options[:extra] || ""
+    @extr2 = options[:extr2] || ""
+    @extension_to_add = options[:extension_to_add] || ""
+    @extension_to_add[0] == '.' ? @extension_to_add[0] = '' : @extension_to_add
+    @extension = (File.extname @path).downcase
+    @extra == "" ? @extended = @path : @extended = @path + '/' + @extra
+    @extr2 == "" ? @extended = @extended : @extended = @extended + '/' + @extr2
+    @extension_to_add == "" ? @with_extension = @extended : @with_extension = @extended + '.' + @extension_to_add
+    @extension_to_add == "" ? @full_path = @extended : @full_path = @extended + '.' + @extension_to_add
+    @dquoty = @path.dquote 
+    @full_path_in_dquotes = @full_path.dquote
+  end
 end
