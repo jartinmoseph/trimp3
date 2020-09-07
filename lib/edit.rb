@@ -68,14 +68,6 @@ class Edit
     @adjusted_comment = @comment != "" ? @comment.downcase.gsub(/ /,'-') + '_' : ""
     @adjusted_artist = (@artist + '_').downcase.gsub(/ /,'-').gsub(/,/,'-').gsub(/--/,'-').gsub(/'/,'-')
     @adjusted_opus = (@handover_hash['opus'] + '_').downcase.gsub(/ /,'-')
-
-    #@audio_file_name = @handover_hash['audio_file_name'].to_s || ""
-    #@video_file_name = @handover_hash['video_file_name'].to_s || ""
-    #@video_file_location = @handover_hash['video_file_location'].to_s || ""
-    #@audio_file_location = @handover_hash['audio_file_location'].to_s || ""
-    #@destination_folder = @handover_hash['destination_folder'].to_s || ""
-    #@audio_file_location = @filename_builder.audio_file_location
-    #@video_file_name = @filename_builder.video_file_name
     @destination_folder = @filename_builder.destination_folder
     @audio_file_name = @filename_builder.audio_file_name
     @mode = @filename_builder.get_mode
@@ -84,35 +76,6 @@ class Edit
     @dist_input_video_pth = Path.new :path => @filename_builder.video_file_location, :extra => @filename_builder.video_file_name
     @quoted_dist_input_video_str = @dist_input_video_pth.full_path_in_dquotes
     @quoted_dist_input_audio_str = @filename_builder.quoted_dist_input_audio_str 
-    #@quoted_dist_input_audio_str = (Path.new :path => @filename_builder.audio_file_location, :extra => @audio_file_name).full_path_in_dquotes
-=begin
-    if @quoted_dist_input_video_str == '""' && @dquoted_dist_input_audio_str != '""'
-      @mode = "audio"
-    elsif @quoted_dist_input_video_str != '""' && @dquoted_dist_input_audio_str == '""'
-      @mode = "video"
-    elsif @quoted_dist_input_video_str != '""' && @dquoted_dist_input_audio_str != '""'
-      @mode = "merge"
-    end
-
-    if @quoted_dist_input_video_str == '""' 
-      @mode = "audio"
-      @quoted_distinguished_principal_filename = @quoted_dist_input_audio_str 
-      @principal_file_extension = (File.extname @audio_file_name).downcase
-    elsif @dquoted_dist_input_audio_str == '""'
-      @mode = "video"
-      @quoted_distinguished_principal_filename = @quoted_dist_input_video_str
-      @principal_file_extension = (File.extname @filename_builder.video_file_name).downcase
-    else
-      @mode = "merge"
-      @quoted_distinguished_principal_filename = @quoted_dist_input_video_str
-      @principal_file_extension = (File.extname @filename_builder.video_file_name).downcase
-    end
-    @mode == "audio" ? @quoted_distinguished_principal_filename = @quoted_dist_input_audio_str : @quoted_distinguished_principal_filename = @quoted_dist_input_video_str
-    @mode == "audio" ? @principal_file_extension = (File.extname @audio_file_name).downcase :  @principal_file_extension = (File.extname @filename_builder.video_file_name).downcase
-    @quoted_distinguished_principal_filename = @filename_builder.quoted_distinguished_principal_filename 
-    @principal_file_extension = @filename_builder.principal_file_extension 
-=end
-
 
     if (@audio_file_name[0,2].to_i > 0) && (@audio_file_name[2,2].to_i > 0) && (@audio_file_name[4,2].to_i > 0)
       @date_with_month_in_text = @audio_file_name[4,2] + Date::ABBR_MONTHNAMES[@audio_file_name[2,2].to_i].downcase + @audio_file_name[0,2]
@@ -124,9 +87,7 @@ class Edit
 
     @derived_tit2 = @artist + ', ' + @composer + ', ' + @song + ' ' + @handover_hash['opus'] + ', ' + @comment + ' ' + @date_with_month_in_text_and_spaces
 
-    #@calculated_extensionless_output_filename = @adjusted_artist + (@distinguisher != "" ? @distinguisher + '_' : "") + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
     @calculated_extensionless_output_filename = @filename_builder.calculated_extensionless_output_filename 
-    #@calculated_extensionless_output_filename = @calculated_extensionless_output_filename.gsub(/,/,'') 
     @discard_before_total_seconds = (@discard_before_hours * 3600) + (@discard_before_minutes * 60) + (@discard_before_seconds)
     @discard_before_cmd = '-ss ' + @discard_before_total_seconds.to_s
     @discard_after_total_seconds  = (@discard_after_hours * 3600)  + (@discard_after_minutes * 60)  + (@discard_after_seconds)
@@ -177,7 +138,7 @@ class Edit
     end
   end
   def av_delayed_merge
-    'ffmpeg -i ' + @audio_file_name + ' -itsoffset ' + @handover_hash['audio_delay'] + ' -i ' + @filename_builder.video_file_name + ' -map 0:a -map 1:v -c copy ' + @filename_builder.quoted_distinguished_calculated_output_filename_str
+    'ffmpeg -i ' + @quoted_dist_input_audio_str + ' -itsoffset ' + @handover_hash['audio_delay'] + ' -i ' + @filename_builder.quoted_dist_input_video_str + ' -map 0:a -map 1:v -c copy ' + @filename_builder.quoted_distinguished_calculated_output_filename_str
   end
 
   def tag_command
@@ -291,7 +252,7 @@ class FilenameBuilder < String
 
     @quoted_distinguished_calculated_output_filename_str = (Path.new :path => @destination_folder, :extra => @calculated_extensionless_output_filename, :extension_to_add => @principal_file_extension).full_path_in_dquotes
 
-    @dist_input_video_pth = (Path.new :path => @video_file_location, :extra => @video_file_name).full_path_in_dquotes
+    #@dist_input_video_pth = (Path.new :path => @video_file_location, :extra => @video_file_name).full_path_in_dquotes
     @quoted_dist_input_audio_str = (Path.new :path => @audio_file_location, :extra => @audio_file_name).full_path_in_dquotes
     #@quoted_dist_input_video_str = (Path.new :path => @video_file_location, :extra => @video_file_name).full_path_in_dquotes
     @calculated_extensionless_trimmed_output_filename = @adjusted_artist + 'tr' + @distinguisher + '_' + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
@@ -357,4 +318,14 @@ class Path < String
     @dquoty = @path.dquote 
     @full_path_in_dquotes = @full_path.dquote
   end
+end
+
+class Cncats < Array
+  attr_accessor :line
+  def initialize
+    @conkats_array = Array.new
+  end
+  def add_line
+  end
+    
 end
