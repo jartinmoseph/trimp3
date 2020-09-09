@@ -42,17 +42,14 @@ for row in 1..CsvArray.length-1
   @this_edit = Edit.new Handover
   if @this_edit.process_this_line.downcase == "y"
     FileUtils.mkdir_p @this_edit.unquoted_dist_tmp_folder unless Dir.exist? @this_edit.unquoted_dist_tmp_folder
-    p @this_edit.unquoted_dist_tmp_folder 
-=begin
-    if Dir.exist? @this_edit.unquoted_dist_tmp_folder
-      puts "the folder is already there"
-    else 
-      puts "the folder doesn't yet exist, creating it now"
-      Dir.mkdir @this_edit.unquoted_dist_tmp_folder 
-    end  
-=end
     unless @this_edit.concat_file_name == ""
-      @cncats_array[@this_edit.concat_line[0].to_i] = @this_edit.concat_line[1..-1]
+      puts "1dist_concat_file_name is " + @this_edit.dist_concat_file_name.inspect
+      #@cncats_array[@this_edit.concat_line[0].to_i] = @this_edit.concat_line[1..-1]
+      p "cncats_array is " + @cncats_array.inspect
+      @dist_concat_file = @this_edit.dist_concat_file_name
+      @concat_handle = File.new @dist_concat_file,"a"
+      @concat_handle.write @this_edit.concat_line
+      @concat_handle.close
     end
     unless @this_edit.process_this_line == "n"
   #    (DoAllHandle.write @this_edit.av_trim_merge + "\n") if @this_edit.mode == "merge" 
@@ -64,13 +61,11 @@ for row in 1..CsvArray.length-1
   end
 end
 DoAllHandle.close
-  p "concat filename"
-  p @this_edit.dist_concat_file_name
+  puts "creating concat file"
+  puts "2dist_concat_file_name is " + @this_edit.dist_concat_file_name.inspect
 unless @this_edit.concat_file_name == ""
-  p "concat filename"
-  p @this_edit.dist_concat_file_name
-  @concat_file = @this_edit.dist_concat_file_name
-  @concat_handle = File.new @concat_file,"a"
+  @dist_concat_file = @this_edit.dist_concat_file_name
+  @concat_handle = File.new @dist_concat_file,"a"
   @concat_handle.truncate(0)
   @cncats_array.each do |thingy|
     @concat_handle.write thingy
@@ -82,5 +77,5 @@ File.open(DoAllFile).each do |line|
 end
 p "DoAllFile has been displayed"
 FileUtils.chmod 0774, DoAllFile
-IO.popen(DoAllFile) 
+#IO.popen(DoAllFile) 
 

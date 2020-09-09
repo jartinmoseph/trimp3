@@ -45,7 +45,8 @@ class Edit
     @handover_hash.update @hash_temp
     @filename_builder = FilenameBuilder.new @handover_hash
 
-    @concat_file_name = @handover_hash['concat_file_name']
+    #@concat_file_name = options['concat_file_name'].to_s || "xxxx"
+    @concat_file_name = @filename_builder.concat_file_name
     @dist_concat_file_name = @filename_builder.dist_concat_file_name
     @concat_line = @filename_builder.concat_line
     @unquoted_dist_tmp_folder = @filename_builder.unquoted_dist_tmp_folder
@@ -73,7 +74,8 @@ class Edit
     @mode = @filename_builder.get_mode
     @fnb_opus = @filename_builder.opus
 
-    @dist_input_video_pth = Path.new :path => @filename_builder.video_file_location, :extra => @filename_builder.video_file_name
+    #@dist_input_video_pth = Path.new :path => @filename_builder.video_file_location, :extra => @filename_builder.video_file_name
+    @dist_input_video_pth = @filename_builder.dist_input_video_pth
     @quoted_dist_input_video_str = @dist_input_video_pth.full_path_in_dquotes
     @quoted_dist_input_audio_str = @filename_builder.quoted_dist_input_audio_str 
 
@@ -113,32 +115,32 @@ class Edit
   end
   def fade_trimmed_file
     if @fade == "y" && @process_this_line != "n"
-      'ffmpeg -i ' + @filename_builder.quoted_dist_trimmed_temp_output_filename + ' -vf "fade=type=in:duration=1,fade=type=out:duration=1:start_time=' + @fade_out_start.to_s + '" -c:a copy ' + @filename_builder.q_fade_trim_calcd_dist_oput_fname 
+      'ffmpeg -y -i ' + @filename_builder.quoted_dist_trimmed_temp_output_filename + ' -vf "fade=type=in:duration=1,fade=type=out:duration=1:start_time=' + @fade_out_start.to_s + '" -c:a copy ' + @filename_builder.q_fade_trim_calcd_dist_oput_fname 
     else ""
     end
   end
 
   def simple_trim
     if (@discard_before_hours + @discard_before_minutes  + @discard_before_seconds  + @discard_after_hours  + @discard_after_minutes  + @discard_after_seconds) > 0 
-    'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @filename_builder.quoted_distinguished_principal_filename + ' -vcodec copy -acodec copy ' + @filename_builder.quoted_dist_trimmed_temp_output_filename
+    'ffmpeg -y ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @filename_builder.quoted_distinguished_principal_filename + ' -vcodec copy -acodec copy ' + @filename_builder.quoted_dist_trimmed_temp_output_filename
     else ""
     end
   end
 
   def av_trim_merge
     if @mode == "merge"
-      'ffmpeg ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_dist_input_audio_str + ' ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_dist_input_video_str + ' ' + @filename_builder.quoted_distinguished_calculated_trimmed_output_filename
+      'ffmpeg -y ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_dist_input_audio_str + ' ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @quoted_dist_input_video_str + ' ' + @filename_builder.quoted_distinguished_calculated_trimmed_output_filename
     else ""
     end
   end
   def av_simple_merge
     if @mode == "merge" && (@discard_before_total_seconds + @discard_after_total_seconds == 0)
-      'ffmpeg -i ' + @quoted_dist_input_audio_str + ' -i ' + @quoted_dist_input_video_str + ' ' + @filename_builder.quoted_distinguished_calculated_output_filename_str
+      'ffmpeg -y -i ' + @quoted_dist_input_audio_str + ' -i ' + @quoted_dist_input_video_str + ' ' + @filename_builder.quoted_distinguished_calculated_output_filename_str
     else ""
     end
   end
   def av_delayed_merge
-    'ffmpeg -i ' + @quoted_dist_input_audio_str + ' -itsoffset ' + @handover_hash['audio_delay'] + ' -i ' + @filename_builder.quoted_dist_input_video_str + ' -map 0:a -map 1:v -c copy ' + @filename_builder.quoted_distinguished_calculated_output_filename_str
+    'ffmpeg -y -i ' + @quoted_dist_input_audio_str + ' -itsoffset ' + @handover_hash['audio_delay'] + ' -i ' + @filename_builder.quoted_dist_input_video_str + ' -map 0:a -map 1:v -c copy ' + @filename_builder.quoted_distinguished_calculated_output_filename_str
   end
 
   def tag_command
@@ -196,6 +198,7 @@ class FilenameBuilder < String
 
   attr_reader :quoted_dist_input_audio_str 
   attr_reader :quoted_dist_input_video_str #
+  attr_reader :dist_input_video_pth
 
   attr_reader :calculated_extensionless_output_filename
   attr_reader :quoted_distinguished_principal_filename 
