@@ -4,11 +4,13 @@ require "parseconfig"
 #require "FileUtils"
 
 puts "SYNTAX: ruby trimp3.rb config.conf list_of_edits_and_tags.csv /path/to/outputfile/outputfileprefix"
-puts "NOTE: if the video file exists, it is treated as the principal file"
+puts "if the video file exists, it is treated as the principal file"
 puts "REMINDER: save csv with tab as field separator"
-puts "ANOTHER THING: csv's with empty fields make it crash"
+puts "ANOTHER THING: csv's with empty fields make it crash, so set process_this_line to n"
 puts "COMMAND LINE PARAMETERS:" + ARGV.inspect
-DoAllFile = ARGV[2] + "do_all\.txt"
+
+@proj_title = ARGV[2] || ""
+DoAllFile = @proj_title + "_do_all\.txt"
 DoAllHandle = File.open DoAllFile,"w+"
 puts "FILE TO RUN IS " + DoAllFile.inspect 
 
@@ -31,7 +33,6 @@ ThisLinePlusTitlesHash = Hash.new
 Handover = Hash.new
 Handover.update :temp_folder => ConfHash['temp_folder']
 A2HHandover = Hash.new
-@cncats_array = Array.new
 
 puts "no of rows in array:" + (CsvArray.length-1).to_s.inspect
 puts "no of columns in array:" + Width.inspect
@@ -42,40 +43,35 @@ for row in 1..CsvArray.length-1
   @this_edit = Edit.new Handover
   if @this_edit.process_this_line.downcase == "y"
     FileUtils.mkdir_p @this_edit.unquoted_dist_tmp_folder unless Dir.exist? @this_edit.unquoted_dist_tmp_folder
-    unless @this_edit.concat_file_name == ""
-      puts "1dist_concat_file_name is " + @this_edit.dist_concat_file_name.inspect
-      #@cncats_array[@this_edit.concat_line[0].to_i] = @this_edit.concat_line[1..-1]
-      p "cncats_array is " + @cncats_array.inspect
-      @dist_concat_file = @this_edit.dist_concat_file_name
-      @concat_handle = File.new @dist_concat_file,"a"
-      @concat_handle.write @this_edit.concat_line
-      @concat_handle.close
-    end
-    unless @this_edit.process_this_line == "n"
-  #    (DoAllHandle.write @this_edit.av_trim_merge + "\n") if @this_edit.mode == "merge" 
-  #    (DoAllHandle.write @this_edit.av_delayed_merge + "\n") if @this_edit.mode == "merge" 
-      #@this_edit.mode == "merge" ? (DoAllHandle.write @this_edit.av_trim_merge + "\n") : true
+    if @this_edit.mode == "audio" || @this_edit.mode == "video"
       DoAllHandle.write @this_edit.simple_trim + "\n"
+    elsif @this_edit.mode == "merge"
+      DoAllHandle.write @this_edit.pretrim_audio + "\n"
+      DoAllHandle.write @this_edit.pretrim_video + "\n"
+      DoAllHandle.write @this_edit.av_delayed_merge + "\n"
+      DoAllHandle.write @this_edit.fade_merged_pretrimmed_file + "\n"
+    elsif @this_edit.mode == "add_picture"
+      DoAllHandle.write @this_edit.add_pic_to_mp3 + "\n"
+    elsif @this_edit.mode == "video"
       DoAllHandle.write @this_edit.fade_trimmed_file + "\n"
     end
+
+    unless @this_edit.concat_filename_base == ""
+      @concat_handle = File.new(@dist_concat_file, "a+")
+      @concat_handle.write @this_edit.concat_file_line
+      @concat_handle.write "\n"
+      @concat_handle.close
+      DoAllHandle.write @this_edit.concat_command
+    end
+
   end
 end
 DoAllHandle.close
-  puts "creating concat file"
-  puts "2dist_concat_file_name is " + @this_edit.dist_concat_file_name.inspect
-unless @this_edit.concat_file_name == ""
-  @dist_concat_file = @this_edit.dist_concat_file_name
-  @concat_handle = File.new @dist_concat_file,"a"
-  @concat_handle.truncate(0)
-  @cncats_array.each do |thingy|
-    @concat_handle.write thingy
-    @concat_handle.write "\n"
-  end
-end
+
 File.open(DoAllFile).each do |line|
- p line
+  p line
 end
 p "DoAllFile has been displayed"
-FileUtils.chmod 0774, DoAllFile
-#IO.popen(DoAllFile) 
 
+FileUtils.chmod 0774, DoAllFile
+IO.popen(DoAllFile) 
