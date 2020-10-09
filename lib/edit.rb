@@ -9,6 +9,10 @@ class String
 end
 
 class Edit
+  attr_reader :artist
+  attr_reader :composer
+  attr_reader :song
+
   attr_reader :quoted_dist_input_video_str 
   #attr_reader :calculated_extensionless_output_filename
   attr_reader :unquoted_dist_tmp_folder
@@ -31,6 +35,8 @@ class Edit
   attr_reader :mode
   attr_reader :process_this_line
   attr_reader :video_file_duration
+  attr_reader :audio_file_duration
+  attr_reader :file_duration 
   attr_reader :temp_folder
   #attr_reader :delayed_discard_before_cmd 
   attr_reader :handover_hash
@@ -88,26 +94,44 @@ class Edit
     @discard_after_cmd = ' -t ' + @calculated_duration_in_secs.to_s
 
     @derived_tit2 = @artist + ', ' + @composer + ', ' + @song + ' ' + @handover_hash['opus'] + ', ' + @comment + ' ' + @filename_builder.date_with_month_in_text_and_spaces
-
+    if @mode == "audio" || @mode == "add_picture"
+      @time_this_file = @filename_builder.dist_input_audio_pth.full_path
+      @audio_ffmpeg = FFMPEG::Movie.new @time_this_file || "file doesn't exist"
+      @audio_file_duration = @audio_ffmpeg.duration
+    end
+=begin
+=end
     if @mode == "video" || @mode == "merge"
-      unless @process_this_line == "n"
-	#@video_ffmpeg = FFMPEG::Movie.new @dist_input_video_pth.full_path || "file doesn't exist"
-	@video_ffmpeg = FFMPEG::Movie.new @filename_builder.dist_input_video_pth.full_path || "file doesn't exist"
-        @video_ffmpeg_duration = @video_ffmpeg.duration
-	  if @calculated_duration_in_secs == 0
-	    @video_file_duration = @video_ffmpeg.duration
-	  elsif @discard_before_total_seconds == 0 && @discard_after_total_seconds > 0
-	    @video_file_duration = @discard_after_total_seconds
-	  elsif @discard_before_total_seconds > 0 && @discard_after_total_seconds == 0
-	    @video_file_duration = @video_ffmpeg.duration - @discard_before_total_seconds
-	  elsif @discard_before_total_seconds > 0 && @discard_after_total_seconds > 0
-	    @video_file_duration = @calculated_duration_in_secs 
-	  else @video_file_duration = 0
-	  end
-	@fade_out_start = @video_file_duration - 1
-      end
+      @time_this_file = @filename_builder.dist_input_video_pth.full_path
+      #unless @process_this_line == "n"
+	@video_ffmpeg = FFMPEG::Movie.new @time_this_file || "file doesn't exist"
+	#@video_ffmpeg = FFMPEG::Movie.new @filename_builder.dist_input_video_pth.full_path || "file doesn't exist"
+	@video_ffmpeg_duration = @video_ffmpeg.duration
+	if @calculated_duration_in_secs == 0
+	  @video_file_duration = @video_ffmpeg.duration
+	elsif @discard_before_total_seconds == 0 && @discard_after_total_seconds > 0
+	  @video_file_duration = @discard_after_total_seconds
+	elsif @discard_before_total_seconds > 0 && @discard_after_total_seconds == 0
+	  @video_file_duration = @video_ffmpeg.duration - @discard_before_total_seconds
+	elsif @discard_before_total_seconds > 0 && @discard_after_total_seconds > 0
+	  @video_file_duration = @calculated_duration_in_secs 
+	else @video_file_duration = 0
+	end
+        @file_duration = @video_file_duration
+        @fade_out_start = @video_file_duration - 1
+      #end
+    elsif @mode == "audio" || @mode == "add_picture" 
+      @file_duration = @audio_file_duration
     end
   end
+
+=begin
+  #@file_duration = @audio_file_duration || @video_file_duration
+  @audio_file_duration ? @file_duration = @audio_file_duration : @file_duration = @video_file_duration
+  @file_duration = @audio_file_duration || @video_file_duration
+  @file_duration = @audio_file_duration || @video_ffmpeg_duration
+=end
+
   def av_simple_merge
     if @mode == "merge" && (@discard_before_total_seconds + @discard_after_total_seconds == 0)
       'ffmpeg -y -i ' + @filename_builder.quoted_dist_input_audio_str + ' -i ' + @filename_builder.quoted_dist_input_video_str + ' ' + @filename_builder.quoted_distinguished_calculated_output_filename_str
@@ -116,7 +140,7 @@ class Edit
   end
   def add_pic_to_mp3
     if @mode == "add_picture"
-     'ffmpeg -y -loop 1 -r 10 -i ' + @quoted_dist_input_picture + ' -i ' + @filename_builder.quoted_dist_input_audio_str + ' -map 0:v:0 -map 1:a:0 -shortest ' + @filename_builder.q_with_pic_calcd_dist_oput_fname 
+     'ffmpeg -y -loop 1 -r 10 -i ' + @quoted_dist_input_picture + ' -i ' + @filename_builder.quoted_dist_input_audio_str + ' -map 0:v:0 -map 1:a:0 -shortest ' + @filename_builder.q_with_pic_calcd_dist_oput_fname
     end 
   end
   def concat_command
@@ -138,6 +162,12 @@ class Edit
   end
   def av_delayed_merge
       'ffmpeg -y -i ' + @filename_builder.dist_pretrimmed_audio + ' -i ' + @filename_builder.dist_pretrimmed_video + ' ' + @filename_builder.q_temp_merged
+  end
+  def fade_picture_added_file
+    if @fade == "y" && @process_this_line != "n"
+      'ffmpeg -y -i ' + @filename_builder.q_with_pic_calcd_dist_oput_fname + ' -vf "fade=type=in:duration=1,fade=type=out:duration=1:start_time=' + @fade_out_start.to_s + '" -c:a copy ' + @filename_builder.q_fade_trim_calcd_dist_oput_fname 
+    else ""
+    end
   end
   def fade_merged_pretrimmed_file
     if @fade == "y" && @process_this_line != "n"
@@ -201,14 +231,13 @@ end
 class FilenameBuilder < String
   attr_reader :distinguisher
   attr_reader :opus
+  attr_reader :mode
+  attr_reader :artist
+
   attr_reader :audio_file_name
   attr_reader :video_file_name
-  attr_reader :mode
   attr_reader :video_file_location
   attr_reader :audio_file_location
-  attr_reader :destination_folder
-  attr_reader :temp_folder
-  attr_reader :artist
 #FilenameBuilder
   attr_reader :concat_list_file_name
   attr_reader :concat_output_file_name
@@ -221,6 +250,7 @@ class FilenameBuilder < String
   attr_reader :quoted_dist_input_audio_str 
   attr_reader :quoted_dist_input_video_str #
   attr_reader :dist_input_video_pth
+  attr_reader :dist_input_audio_pth 
   attr_reader :q_with_pic_calcd_dist_oput_fname 
 #FilenameBuilder
   attr_reader :extnless_pretrimmed_audio 
@@ -231,17 +261,21 @@ class FilenameBuilder < String
   attr_reader :q_temp_merged
 
   attr_reader :calculated_extensionless_output_filename
-  attr_reader :quoted_distinguished_principal_filename 
   attr_reader :quoted_distinguished_calculated_output_filename_str 
   attr_reader :calculated_extensionless_trimmed_output_filename
   attr_reader :unquoted_distinguished_calculated_trimmed_output_filename
   attr_reader :quoted_distinguished_calculated_trimmed_output_filename
+  attr_reader :quoted_dist_trimmed_temp_output_filename
   attr_reader :fade_trim_calcd_extnless_oput_fname 
   attr_reader :q_fade_trim_calcd_dist_oput_fname 
-  attr_reader :quoted_dist_trimmed_temp_output_filename
+  attr_reader :destination_folder
+
+  attr_reader :quoted_distinguished_principal_filename 
+  attr_reader :principal_file_extension
+
+  attr_reader :temp_folder
   attr_reader :quoted_dist_tmp_folder
   attr_reader :unquoted_dist_tmp_folder
-  attr_reader :principal_file_extension
   attr_reader :quoted_dist_input_picture 
   attr_reader :date_with_month_in_text_and_spaces 
 #FilenameBuilder
@@ -260,6 +294,7 @@ class FilenameBuilder < String
     @temp_folder = options['temp_folder'].to_s || ""
     @concat_filename_base = options['concat_filename_base'] || ""
     @temp_folder = options['temp_folder'].to_s || ""
+    @video_delay = options['video_delay'].to_f || 0
     options['concat_filename_base'].to_s ? @concat_list_file_name = 'concat_' + @concat_filename_base + '.txt': "" 
 #FilenameBuilder
     if (@audio_file_name[0,2].to_i > 0) && (@audio_file_name[2,2].to_i > 0) && (@audio_file_name[4,2].to_i > 0)
@@ -274,11 +309,14 @@ class FilenameBuilder < String
     @adjusted_opus = (@opus + '_').downcase.gsub(/ /,'-')
     @adjusted_artist = (@artist + '_').downcase.gsub(/ /,'-').gsub(/,/,'-').gsub(/--/,'-').gsub(/'/,'-')
 
-    @dist_input_video_pth = Path.new :path => @video_file_location, :extra => @video_file_name
     @dist_picture = Path.new :path => @picture_file_location, :extra => @picture_file_name
     @quoted_dist_input_picture = @dist_picture.full_path_in_dquotes
+
+    @dist_input_video_pth = Path.new :path => @video_file_location, :extra => @video_file_name
+    @dist_input_audio_pth = Path.new :path => @audio_file_location, :extra => @audio_file_name
     @quoted_dist_input_video_str = @dist_input_video_pth.full_path_in_dquotes
-    @quoted_dist_input_audio_str = (Path.new :path => @audio_file_location, :extra => @audio_file_name).full_path_in_dquotes
+    @quoted_dist_input_audio_str = @dist_input_audio_pth.full_path_in_dquotes
+    #@quoted_dist_input_audio_str = (Path.new :path => @audio_file_location, :extra => @audio_file_name).full_path_in_dquotes
 
     principal_file == "audiofile" ? @quoted_distinguished_principal_filename = @quoted_dist_input_audio_str : @quoted_distinguished_principal_filename = @quoted_dist_input_video_str 
     principal_file == "audiofile" ? @principal_file_extension = (File.extname @audio_file_name).downcase :  @principal_file_extension = (File.extname @video_file_name).downcase
@@ -292,7 +330,12 @@ class FilenameBuilder < String
     @quoted_distinguished_calculated_output_filename_str = (Path.new :path => @destination_folder, :extra => @calculated_extensionless_output_filename, :extension_to_add => @principal_file_extension).full_path_in_dquotes
 
     @quoted_dist_input_audio_str = (Path.new :path => @audio_file_location, :extra => @audio_file_name).full_path_in_dquotes
-    @calculated_extensionless_trimmed_output_filename = @adjusted_artist + 'tr' + @distinguisher + '_' + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
+    if options['video_delay']
+      @vd = (options['video_delay'] * 100).to_i.to_s
+      @calculated_extensionless_trimmed_output_filename = @adjusted_artist + 'tr' + @distinguisher + '-vd' + @vd + '_' + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
+    else
+      @calculated_extensionless_trimmed_output_filename = @adjusted_artist + 'tr' + @distinguisher + '_' + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
+    end
     @fade_trim_calcd_extnless_oput_fname              = @adjusted_artist + 'tf' + @distinguisher + '_' + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
     @with_pic_calcd_extnless_oput_fname              = @adjusted_artist + 'wp' + @distinguisher + '_' + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
     @extnless_pretrimmed_audio = @adjusted_artist + 'pta' + @distinguisher + '_' + @adjusted_opus + @adjusted_comment + @date_with_month_in_text
@@ -306,7 +349,7 @@ class FilenameBuilder < String
     @quoted_distinguished_calculated_trimmed_output_filename = (Path.new :path => @destination_folder, :extra => @calculated_extensionless_trimmed_output_filename, :extension_to_add => @principal_file_extension).full_path_in_dquotes
     @unquoted_distinguished_calculated_trimmed_output_filename = (Path.new :path => @destination_folder, :extra => @calculated_extensionless_trimmed_output_filename, :extension_to_add => @principal_file_extension).full_path
     @fade_trim_calcd_dist_oput_fname = (Path.new :path => options['destination_folder'], :extra => @fade_trim_calcd_extnless_oput_fname, :extension_to_add => @principal_file_extension).full_path
-    @q_with_pic_calcd_dist_oput_fname = (Path.new :path => options['destination_folder'], :extra => @with_pic_calcd_extnless_oput_fname, :extension_to_add => @principal_file_extension).full_path_in_dquotes
+    @q_with_pic_calcd_dist_oput_fname = (Path.new :path => options['destination_folder'], :extr2 => @with_pic_calcd_extnless_oput_fname, :extra => @temp_folder, :extension_to_add => @principal_file_extension).full_path_in_dquotes
     @q_fade_trim_calcd_dist_oput_fname = (Path.new :path => options['destination_folder'], :extra => @fade_trim_calcd_extnless_oput_fname, :extension_to_add => @principal_file_extension).full_path_in_dquotes
     @quoted_dist_tmp_folder = (Path.new :path => options['destination_folder'], :extra => @temp_folder).full_path_in_dquotes
     @quoted_dist_trimmed_temp_output_filename = (Path.new :path => options['destination_folder'], :extra => @temp_folder, :extr2 => @calculated_extensionless_trimmed_output_filename, :extension_to_add => @principal_file_extension).full_path_in_dquotes
