@@ -31,6 +31,11 @@ else
   exit
 end
  
+if File.exist? ConfHash['temp_folder_location']
+  FileUtils.rm_rf ConfHash['temp_folder_location']
+  FileUtils.mkdir ConfHash['temp_folder_location']
+end
+p "tried to remove " + ConfHash['temp_folder_location'].inspect
 
 TagListFile = ConfHash['tag_list'] || "tag_list not set"
 TagListFileHandle = File.open TagListFile,"r"
@@ -42,42 +47,32 @@ ThisLinePlusTitlesArray = Array.new
 ThisLinePlusTitlesHash = Hash.new
 Handover = Hash.new
 Handover.update :temp_folder => ConfHash['temp_folder']
+Handover.update :temp_folder_location => ConfHash['temp_folder_location']
 A2HHandover = Hash.new
 
 puts "no of rows in array:" + (@csv_array.length-1).to_s.inspect
-puts "no of columns in array:" + Width.inspect
+puts "no of columns in array:" + Width.inspect + "\n"
+puts "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 for row in 1..@csv_array.length-1
   ThisLinePlusTitlesArray[0] = @csv_array[0]
   ThisLinePlusTitlesArray[1] = @csv_array[row]
   Handover.update :array => ThisLinePlusTitlesArray
   @this_edit = Edit.new Handover
-  @process_mode = @this_edit.process_mode.downcase
-  if @process_mode = "d" || "y"
-    @timings_handle.write (@this_edit.file_duration.to_s + "," + @this_edit.artist + "," + @this_edit.composer + "," + @this_edit.song + "\n") if @this_edit.file_duration 
-  end
+  @process_mode = @this_edit.process_mode
+  @timings_handle.write @this_edit.line_of_duration_file 
+  DoAllHandle.write @this_edit.simple_trim
+  DoAllHandle.write @this_edit.fade_trimmed_file
+  DoAllHandle.write @this_edit.pretrim_audio
+  DoAllHandle.write @this_edit.pretrim_video
+  DoAllHandle.write @this_edit.av_delayed_merge
+  DoAllHandle.write @this_edit.fade_merged_pretrimmed_file
+  DoAllHandle.write @this_edit.add_pic_to_mp3
+  DoAllHandle.write @this_edit.fade_picture_added_file
   if @process_mode == "y"
     FileUtils.mkdir_p @this_edit.unquoted_dist_tmp_folder unless Dir.exist? @this_edit.unquoted_dist_tmp_folder
-    case @this_edit.mode
-      when "audio"
-        DoAllHandle.write @this_edit.simple_trim + "\n"
-      when "video"
-        DoAllHandle.write @this_edit.simple_trim + "\n"
-        DoAllHandle.write @this_edit.fade_trimmed_file + "\n"
-      when "merge"
-	DoAllHandle.write @this_edit.pretrim_audio + "\n"
-	DoAllHandle.write @this_edit.pretrim_video + "\n"
-	DoAllHandle.write @this_edit.av_delayed_merge + "\n"
-	DoAllHandle.write @this_edit.fade_merged_pretrimmed_file + "\n"
-      when "add_picture"
-        DoAllHandle.write @this_edit.add_pic_to_mp3 + "\n"
-        DoAllHandle.write @this_edit.fade_picture_added_file + "\n"
-    end
-=begin
-=end
-    unless @this_edit.concat_filename_base == ""
+    if @this_edit.do_concat
       @concat_handle = File.open(@this_edit.dist_concat_list_file_name, "a+")
       @concat_handle.write @this_edit.concat_file_line
-      @concat_handle.write "\n"
       @concat_handle.close
       DoAllHandle.write @this_edit.concat_command + "\n"
     end
