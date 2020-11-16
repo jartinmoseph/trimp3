@@ -60,17 +60,18 @@ for row in 1..@csv_array.length-1
   @this_edit = Edit.new Handover
   @process_mode = @this_edit.process_mode
   @timings_handle.write @this_edit.line_of_duration_file 
-  DoAllHandle.write @this_edit.simple_trim
-  DoAllHandle.write @this_edit.fade_trimmed_file
+  DoAllHandle.write @this_edit.audio_trim
+  DoAllHandle.write @this_edit.video_trim
   DoAllHandle.write @this_edit.pretrim_audio
   DoAllHandle.write @this_edit.pretrim_video
   DoAllHandle.write @this_edit.av_delayed_merge
-  DoAllHandle.write @this_edit.fade_merged_pretrimmed_file
   DoAllHandle.write @this_edit.add_pic_to_mp3
+  DoAllHandle.write @this_edit.fade_merged_pretrimmed_file
+  DoAllHandle.write @this_edit.fade_trimmed_file
   DoAllHandle.write @this_edit.fade_picture_added_file
-  if @process_mode == "y"
+  if @process_mode == "y" || @process_mode == "s" || @process_mode == "f"
     FileUtils.mkdir_p @this_edit.unquoted_dist_tmp_folder unless Dir.exist? @this_edit.unquoted_dist_tmp_folder
-    if @this_edit.do_concat
+    if @this_edit.do_concat_command
       @concat_handle = File.open(@this_edit.dist_concat_list_file_name, "a+")
       @concat_handle.write @this_edit.concat_file_line
       @concat_handle.close
