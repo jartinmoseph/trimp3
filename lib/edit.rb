@@ -14,6 +14,8 @@ class Edit
   attr_reader :song
   attr_reader :unquoted_dist_tmp_folder
   attr_reader :quoted_dist_tmp_folder
+  attr_reader :destination_folder
+  attr_reader :distinguisher
 
   attr_reader :concat_list_file_name
   attr_reader :dist_concat_list_file_name
@@ -36,6 +38,8 @@ class Edit
   attr_reader :video_file_duration
   attr_reader :audio_file_duration
   attr_reader :file_duration 
+  attr_reader :file_dur_mins 
+  attr_reader :file_dur_secs
   #attr_reader :write_the_duration 
   attr_reader :line_of_duration_file
   attr_reader :temp_folder
@@ -120,7 +124,7 @@ class Edit
 
     @all_times = @discard_before_hours + @discard_before_minutes + @discard_before_seconds + @discard_after_hours + @discard_after_minutes + @discard_after_seconds
     if self.file_duration && @process_mode == "y" || @process_mode == "d" || @process_mode == "f"
-      @line_of_duration_file = self.file_duration.to_s + "," + @artist + "," + @composer + "," + @song + "\n"
+      @line_of_duration_file = self.file_dur_mins.to_s + "," + self.file_dur_secs.to_s + "," + self.file_duration.to_s + "," + @artist + "," + @composer + "," + @song + "\n"
     else
       #@line_of_duration_file = "no line for duration file. process_mode is " + @process_mode.inspect + " file_duration is " + self.file_duration.inspect
       @line_of_duration_file = ""
@@ -149,7 +153,7 @@ class Edit
     if @mode == "add_picture" && @process_mode == "y"
       @do_add_pic_to_mp3 = true
     end
-    if @mode == "merge" && @video_delay > 0 && (@process_mode == "y" || @process_mode == "s" || @process_mode == "f")
+    if @mode == "merge" && (@process_mode == "y" || @process_mode == "s" || @process_mode == "f")
       @do_fade_merged_pretrimmed_file = true
     end
     if @fade == "y" && @process_mode == "y" && @mode == "add_picture"
@@ -183,10 +187,18 @@ class Edit
   end
   def pretrim_audio
     if @do_pretrim_audio 
+      'ffmpeg -y ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + ' -i ' + @filename_builder.quoted_dist_input_audio_str + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -acodec copy ' + @filename_builder.dist_pretrimmed_audio  + "\n"
+    else ""
+    end
+  end
+=begin
+  def pretrim_audio
+    if @do_pretrim_audio 
       'ffmpeg -y ' + (@discard_before_total_seconds == 0 ? "" :  @discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @filename_builder.quoted_dist_input_audio_str + ' -acodec copy ' + @filename_builder.dist_pretrimmed_audio  + "\n"
     else ""
     end
   end
+=end
   def video_trim
     if @do_video_trim
       'ffmpeg -y ' + (@discard_before_total_seconds == 0 ? "" :  @video_delayed_discard_before_cmd) + (@discard_after_total_seconds <= 0 ? "" :  @discard_after_cmd) + ' -i ' + @filename_builder.quoted_dist_input_video_str + ' -vcodec copy ' + @filename_builder.dist_ready_to_fade_filename_pth.full_path_in_dquotes + "\n"
@@ -255,6 +267,11 @@ class Edit
     else
       @video_ffmpeg = "file doesn't exist"
     end
+    if @file_duration
+      @file_dur_mins = (@file_duration/60).to_i
+      @file_dur_secs = ((@file_duration*100) - (@file_dur_mins*6000)).to_i/100
+    end
+    @file_duration
   end
 
   def tag_command
