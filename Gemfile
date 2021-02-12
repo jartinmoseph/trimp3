@@ -4,6 +4,7 @@ source "https://rubygems.org"
 gem 'parseconfig'
 gem 'ruby-mp3info', git: 'https://github.com/moumar/ruby-mp3info'
 gem 'csv'
+gem 'streamio-ffmpeg'
 
 git_source(:github) {|repo_name| "https://github.com/#{repo_name}" }
 

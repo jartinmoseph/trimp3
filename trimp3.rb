@@ -1,19 +1,28 @@
 require "csv"
 require "./lib/edit.rb"
 require "parseconfig"
-#require "FileUtils"
+
+4.times do |count|
+  if ARGV[count] == "y" 
+    @thunderbirds_are_go = TRUE
+  end
+end
+if @thunderbirds_are_go
+  ConfigFile = "/Users/martinpick/git/trimp3/conf/config.conf"
+else
+  ConfigFile = ARGV[0] 
+end
+
+ConfPC = ParseConfig.new ConfigFile
+ConfHash = ConfPC.params.freeze
+puts "CONFIG HASH IS " + ConfHash.inspect 
 
 p @proj_title = ARGV[2] || "/Users/martinpick/git/trimp3/work_files/default_trimp3"
 @timings_csv = @proj_title + "_timings.csv"
 @timings_handle = File.open @timings_csv,"w+"
-DoAllFile = @proj_title + "_do_all\.txt"
-DoAllHandle = File.open DoAllFile,"w+"
-puts "FILE TO RUN IS " + DoAllFile.inspect 
-
-ConfigFile = ARGV[0] || "/Users/martinpick/git/trimp3/conf/config.conf"
-ConfPC = ParseConfig.new ConfigFile
-ConfHash = ConfPC.params.freeze
-puts "CONFIG HASH IS " + ConfHash.inspect 
+@do_all_file = @proj_title + "_do_all\.txt"
+DoAllHandle = File.open @do_all_file,"w+"
+puts "FILE TO RUN IS " + @do_all_file.inspect 
 
 @csv_file = ARGV[1] || "/Users/martinpick/git/trimp3/work_files/trimp3sheet.csv" 
 #work_files/do_trimp3/dotrimp3
@@ -39,6 +48,7 @@ Width = @csv_array.transpose.length
 ThisLinePlusTitlesArray = Array.new
 ThisLinePlusTitlesHash = Hash.new
 Handover = Hash.new
+Handover.update :invoked_by_trimp3 => true
 Handover.update :temp_folder => ConfHash['temp_folder']
 Handover.update :temp_folder_location => ConfHash['temp_folder_location']
 A2HHandover = Hash.new
@@ -66,6 +76,7 @@ for row in 1..@csv_array.length-1
   DoAllHandle.write @this_edit.add_pic_to_mp3
   DoAllHandle.write @this_edit.fade_merged_pretrimmed_file
   DoAllHandle.write @this_edit.fade_trimmed_file
+  DoAllHandle.write @this_edit.fade_untrimmed_file
   DoAllHandle.write @this_edit.fade_picture_added_file
   if @process_mode == "y" || @process_mode == "s" || @process_mode == "f"
     FileUtils.mkdir_p @this_edit.unquoted_dist_tmp_folder unless Dir.exist? @this_edit.unquoted_dist_tmp_folder
@@ -85,19 +96,21 @@ File.open(@timings_csv).each do |line|
 end
 puts "That was " + @timings_csv.inspect
 puts "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-File.open(DoAllFile).each do |line|
+File.open(@do_all_file).each do |line|
   p line
 end
-puts "That was " + DoAllFile.inspect
+puts "That was " + @do_all_file.inspect
 puts "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
 puts "SYNTAX: ruby y trimp3.rb config.conf list_of_edits_and_tags.csv /path/to/outputfile/outputfileprefix"
-puts "leave off the initial y (can be anything) to just display the DoAllFile"
+puts "leave off the initial y to just display the @do_all_file"
 puts "if the video file exists, it is treated as the principal file"
 puts "REMINDER: save csv with tab as field separator"
 puts "ANOTHER THING: csv's with empty fields make it crash, so set process_mode to n"
-puts "process_mode can be y (yes), n (no), f (fade), d (duration), s (short clip to test sync when merging)"
+puts "process_mode can be y (yes), n (no), f (fade), d (duration), s (short clip to test sync when merging), test (writes the hash to a file so it can be used for rspec)"
 puts "video_delay is in seconds, resolved to hundredths of a second"
 puts "COMMAND LINE PARAMETERS:" + ARGV.inspect
 
-FileUtils.chmod 0774, DoAllFile
-IO.popen(DoAllFile) if ARGV[3]
+FileUtils.chmod 0774, @do_all_file
+  
+#@thunderbirds_are_go ?  IO.popen(@do_all_file) : ""
+IO.popen(@do_all_file) if @thunderbirds_are_go 
