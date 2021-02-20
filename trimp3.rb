@@ -70,7 +70,7 @@ for row in 1..@csv_array.length-1
   @timings_handle.write @this_edit.line_of_duration_file
   DoAllHandle.write @this_edit.audio_trim
   DoAllHandle.write @this_edit.video_trim
-  DoAllHandle.write @this_edit.pretrim_audio
+  #DoAllHandle.write @this_edit.pretrim_audio
   DoAllHandle.write @this_edit.pretrim_video
   DoAllHandle.write @this_edit.av_delayed_merge
   DoAllHandle.write @this_edit.add_pic_to_mp3
