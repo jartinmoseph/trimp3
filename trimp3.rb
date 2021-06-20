@@ -51,6 +51,9 @@ Handover = Hash.new
 Handover.update :invoked_by_trimp3 => true
 Handover.update :temp_folder => ConfHash['temp_folder']
 Handover.update :temp_folder_location => ConfHash['temp_folder_location']
+Handover.update :test_spec_file => ConfHash['test_spec_file']
+Handover.update :test_top_file => ConfHash['test_top_file']
+Handover.update :test_end_file => ConfHash['test_end_file']
 A2HHandover = Hash.new
 
 puts "no of rows in array:" + (@csv_array.length-1).to_s.inspect
@@ -106,7 +109,7 @@ puts "leave off the initial y to just display the @do_all_file"
 puts "if the video file exists, it is treated as the principal file"
 puts "REMINDER: save csv with tab as field separator"
 puts "ANOTHER THING: csv's with empty fields make it crash, so set process_mode to n"
-puts "process_mode can be y (yes), n (no), f (fade), d (duration), s (short clip to test sync when merging), test (writes the hash to a file so it can be used for rspec)"
+puts "process_mode can be y (yes), n (no), r (re-encode when trimming), f (fade), d (duration), s (short clip to test sync when merging), test (writes the hash to a file so it can be used for rspec)"
 puts "video_delay is in seconds, resolved to hundredths of a second"
 puts "COMMAND LINE PARAMETERS:" + ARGV.inspect
 
